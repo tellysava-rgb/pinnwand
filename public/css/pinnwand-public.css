@@ -1,0 +1,588 @@
+.pinnwand-form-wrap,
+.pinnwand-results,
+.pinnwand-search-form {
+  width: 100%;
+  max-width: 1225px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.pinnwand-profile-wrap,
+.pinnwand-detail-box {
+  max-width: 980px;
+}
+
+.pinnwand-detail-layout {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 18px;
+  align-items: start;
+  max-width: 1180px;
+}
+
+.pinnwand-edit-layout {
+  display: flex;
+  gap: 18px;
+  align-items: start;
+}
+
+.pinnwand-edit-left,
+.pinnwand-edit-right {
+  min-width: 0;
+}
+
+.pinnwand-edit-left {
+  flex: 1 1 58%;
+}
+
+.pinnwand-edit-right {
+  flex: 1 1 42%;
+  max-width: 460px;
+}
+
+.pinnwand-detail-left {
+  min-width: 0;
+}
+
+.pinnwand-detail-description {
+  max-height: 260px;
+  overflow: auto;
+  margin-bottom: 12px;
+}
+
+.pinnwand-detail-right {
+  min-width: 0;
+}
+
+.pinnwand-main-image-wrap {
+  position: relative;
+  border: 1px solid #d8dbe0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.pinnwand-main-image {
+  width: 100%;
+  max-height: 360px;
+  object-fit: cover;
+  display: block;
+}
+
+.pinnwand-image-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border: 1px solid #d0d5dd;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #344054;
+  cursor: pointer;
+  z-index: 2;
+  line-height: 1;
+}
+
+.pinnwand-image-nav-prev {
+  left: 10px;
+}
+
+.pinnwand-image-nav-next {
+  right: 10px;
+}
+
+.pinnwand-image-nav-btn:hover {
+  background: #fff;
+}
+
+.pinnwand-thumb-row {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.pinnwand-thumb-row-edit {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.pinnwand-thumb-btn {
+  border: 1px solid #d8dbe0;
+  border-radius: 8px;
+  padding: 0;
+  background: #fff;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.pinnwand-thumb-btn img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  display: block;
+}
+
+.pinnwand-thumb-btn.is-active {
+  border-color: #d8dbe0;
+  box-shadow: none;
+}
+
+.pinnwand-card-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.pinnwand-card {
+  border: 1px solid #d8dbe0;
+  border-radius: 12px;
+  padding: 12px;
+  background: linear-gradient(180deg, #ffffff 0%, #f7f8fa 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+.pinnwand-card-image-link img,
+.pinnwand-gallery-item img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 8px;
+}
+
+.pinnwand-card-image-link img {
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.pinnwand-no-image {
+  border: 1px dashed #b8bec8;
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  color: #667085;
+}
+
+.pinnwand-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.pinnwand-dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pinnwand-dashboard-table th,
+.pinnwand-dashboard-table td {
+  border-bottom: 1px solid #e4e7ec;
+  padding: 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.pinnwand-form-wrap label,
+.pinnwand-profile-wrap label,
+.pinnwand-results label,
+.pinnwand-form-wrap input,
+.pinnwand-form-wrap textarea,
+.pinnwand-form-wrap select,
+.pinnwand-profile-wrap input,
+.pinnwand-profile-wrap textarea,
+.pinnwand-profile-wrap select,
+.pinnwand-results input,
+.pinnwand-results select,
+.pinnwand-results textarea,
+.pinnwand-results button {
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.pinnwand-article-form input[type="text"],
+.pinnwand-article-form input[type="number"],
+.pinnwand-article-form textarea,
+.pinnwand-article-form select,
+.pinnwand-profile-form input[type="text"],
+.pinnwand-search-form input[type="text"] {
+  width: 100%;
+  max-width: 520px;
+}
+
+.pinnwand-search-form input[type="text"] {
+  max-width: none;
+  min-height: 44px;
+  font-size: 1rem;
+}
+
+.pinnwand-search-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.pinnwand-search-item {
+  margin: 0;
+}
+
+.pinnwand-search-item-keyword {
+  flex: 1 1 620px;
+  margin-right: 10px;
+}
+
+.pinnwand-search-item-borrowed {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.pinnwand-search-item-borrowed label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pinnwand-search-item-borrowed input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+
+.pinnwand-search-item-submit button {
+  min-height: 44px;
+  padding: 0 16px;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.pinnwand-article-form button[type="submit"] {
+  min-height: 44px;
+  padding: 0 16px;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.pinnwand-card-title {
+  margin: 10px 0 8px;
+  font-size: 1.6rem;
+  line-height: 1.2;
+}
+
+.pinnwand-card-title a {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.pinnwand-card-meta {
+  margin: 0 0 6px;
+}
+
+.pinnwand-tag-input-wrap {
+  position: relative;
+}
+
+.pinnwand-tag-live-suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  max-height: 170px;
+  overflow: auto;
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+  background: #fff;
+  padding: 6px;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.12);
+}
+
+.pinnwand-tag-live-item {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.pinnwand-tag-live-item:hover {
+  background: #f8f9fb;
+}
+
+.pinnwand-keyword-link {
+  border: 1px solid #d0d5dd;
+  border-radius: 999px;
+  background: #fff;
+  color: #344054;
+  cursor: pointer;
+  padding: 2px 8px;
+  font-size: 0.85rem;
+  line-height: 1.2;
+  margin: 2px 4px 2px 0;
+}
+
+.pinnwand-keyword-link:hover {
+  background: #f8f9fb;
+}
+
+.pinnwand-keyword-more {
+  display: inline-block;
+  position: relative;
+  margin: 2px 4px 2px 0;
+}
+
+.pinnwand-keyword-more summary {
+  list-style: none;
+  border: 1px solid #d0d5dd;
+  border-radius: 999px;
+  background: #f8f9fb;
+  color: #344054;
+  padding: 2px 8px;
+  font-size: 0.85rem;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.pinnwand-keyword-more summary::-webkit-details-marker {
+  display: none;
+}
+
+.pinnwand-keyword-more-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 5;
+  min-width: 180px;
+  padding: 8px;
+  border: 1px solid #d0d5dd;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(16, 24, 40, 0.08);
+}
+
+
+.pinnwand-existing-images-controls {
+  margin-top: 10px;
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+  padding: 10px;
+  background: #fff;
+}
+
+.pinnwand-existing-images-controls h4 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+}
+
+.pinnwand-image-control-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.pinnwand-image-control-card {
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+  padding: 8px;
+  background: #f9fafb;
+}
+
+.pinnwand-image-control-thumb img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+}
+
+.pinnwand-image-control-actions {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.pinnwand-remove-checkbox {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pinnwand-remove-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #fff;
+  color: #475467;
+  cursor: pointer;
+}
+
+.pinnwand-remove-icon-btn:hover {
+  background: #fef3f2;
+  border-color: #fecdca;
+  color: #b42318;
+}
+
+.pinnwand-primary-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #fff;
+  color: #475467;
+  cursor: pointer;
+}
+
+.pinnwand-primary-icon-btn:hover {
+  background: #f8f9fb;
+  border-color: #d0d5dd;
+  color: #344054;
+}
+
+.pinnwand-primary-icon-btn.is-active {
+  background: #f8f9fb;
+  border-color: #d0d5dd;
+  color: #344054;
+}
+
+.pinnwand-edit-image-grid {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pinnwand-edit-image-card {
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+  background: #fff;
+  padding: 8px;
+}
+
+.pinnwand-edit-image-card .pinnwand-thumb-btn {
+  width: 100%;
+}
+
+.pinnwand-single-upload {
+  margin-top: 8px;
+}
+
+.pinnwand-single-upload input[type="file"] {
+  display: block;
+  margin-top: 6px;
+}
+
+.pinnwand-single-upload small {
+  display: block;
+  margin-top: 6px;
+  color: #667085;
+}
+
+.pinnwand-notice {
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border: 1px solid transparent;
+}
+
+.pinnwand-notice-success {
+  background: #ecfdf3;
+  border-color: #a6f4c5;
+  color: #05603a;
+}
+
+.pinnwand-notice-error {
+  background: #fef3f2;
+  border-color: #fecdca;
+  color: #b42318;
+}
+
+.pinnwand-pagination {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.pinnwand-meta-list {
+  margin: 0 0 12px;
+  padding-left: 18px;
+}
+
+@media (max-width: 900px) {
+  .pinnwand-detail-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .pinnwand-edit-layout {
+    display: block;
+  }
+
+  .pinnwand-main-image {
+    max-height: 300px;
+  }
+
+  .pinnwand-edit-image-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .pinnwand-search-form {
+    display: block;
+  }
+
+  .pinnwand-search-item {
+    margin-bottom: 10px;
+  }
+
+  .pinnwand-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pinnwand-dashboard-table,
+  .pinnwand-dashboard-table thead,
+  .pinnwand-dashboard-table tbody,
+  .pinnwand-dashboard-table tr,
+  .pinnwand-dashboard-table th,
+  .pinnwand-dashboard-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .pinnwand-dashboard-table thead {
+    display: none;
+  }
+
+  .pinnwand-dashboard-table td {
+    border-bottom: 1px solid #e4e7ec;
+    padding: 8px 0;
+  }
+}
+
+@media (max-width: 1200px) {
+  .pinnwand-card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .pinnwand-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pinnwand-edit-image-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
