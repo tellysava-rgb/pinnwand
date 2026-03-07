@@ -89,9 +89,9 @@ class PW_Settings {
             <style>
                 .pw-settings-grid {
                     display: grid;
-                    grid-template-columns: repeat(2, minmax(320px, 1fr));
+                    grid-template-columns: repeat(3, minmax(280px, 1fr));
                     gap: 18px;
-                    max-width: 1100px;
+                    max-width: 1500px;
                 }
                 .pw-settings-card {
                     background: #fff;
@@ -117,18 +117,37 @@ class PW_Settings {
                 .pw-settings-field input[type="number"] {
                     width: 140px;
                 }
-                .pw-settings-row-full {
-                    grid-column: 1 / -1;
-                }
                 .pw-settings-subgrid {
                     display: grid;
-                    grid-template-columns: repeat(2, minmax(260px, 1fr));
+                    grid-template-columns: repeat(2, minmax(220px, 1fr));
                     gap: 16px;
                 }
                 .pw-settings-subgrid-limits {
                     display: grid;
-                    grid-template-columns: repeat(3, minmax(220px, 1fr));
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
                     gap: 16px;
+                }
+                .pw-settings-subgrid-limits .pw-settings-field input[type="number"] {
+                    width: 100%;
+                    max-width: 90px;
+                }
+                .pw-settings-field input.pw-compact-number {
+                    width: 90px;
+                }
+                .pw-settings-captcha-details {
+                    margin-top: 12px;
+                }
+                .pw-settings-card-images .pw-settings-subgrid {
+                    grid-template-columns: repeat(2, minmax(220px, 1fr));
+                    align-items: start;
+                }
+                .pw-settings-card-images .pw-settings-field label {
+                    line-height: 1.25;
+                }
+                @media (max-width: 1280px) {
+                    .pw-settings-card-images .pw-settings-subgrid {
+                        grid-template-columns: 1fr;
+                    }
                 }
                 @media (max-width: 900px) {
                     .pw-settings-grid,
@@ -141,6 +160,68 @@ class PW_Settings {
             <form method="post" action="options.php">
                 <?php settings_fields('pinnwand_settings_group'); ?>
                 <div class="pw-settings-grid">
+                    <section class="pw-settings-card pw-settings-card-images">
+                        <h2><?php esc_html_e('Registrierung', 'pinnwand'); ?></h2>
+                        <p class="description"><?php esc_html_e('Nur Benutzer mit gueltigem Einladungscode koennen sich registrieren.', 'pinnwand'); ?></p>
+                        <div class="pw-settings-field">
+                            <label for="pw-invitation-code"><?php esc_html_e('Einladungscode', 'pinnwand'); ?></label>
+                            <input id="pw-invitation-code" type="text" name="<?php echo esc_attr(self::OPTION_KEY); ?>[invitation_code]" value="<?php echo esc_attr((string) $settings['invitation_code']); ?>" />
+                        </div>
+                        <div class="pw-settings-field">
+                            <label for="pw-invitation-valid-until"><?php esc_html_e('Gueltig bis (Datum)', 'pinnwand'); ?></label>
+                            <input id="pw-invitation-valid-until" type="date" name="<?php echo esc_attr(self::OPTION_KEY); ?>[invitation_valid_until]" value="<?php echo esc_attr((string) $settings['invitation_valid_until']); ?>" />
+                        </div>
+                        <div class="pw-settings-field">
+                            <label><?php esc_html_e('Verwendungen aktuell', 'pinnwand'); ?></label>
+                            <input type="number" value="<?php echo esc_attr((string) ((int) $settings['invitation_usage_count'])); ?>" readonly />
+                        </div>
+                        <p class="description"><?php esc_html_e('Regel: leer oder Vergangenheit = ungueltig, heute oder Zukunft = gueltig.', 'pinnwand'); ?></p>
+                    </section>
+
+                    <section class="pw-settings-card">
+                        <h2><?php esc_html_e('Captcha', 'pinnwand'); ?></h2>
+                        <div class="pw-settings-field">
+                            <label for="pw-registration-captcha-enabled">
+                                <input id="pw-registration-captcha-enabled" type="checkbox" name="<?php echo esc_attr(self::OPTION_KEY); ?>[registration_captcha_enabled]" value="1" <?php checked((int) $settings['registration_captcha_enabled'], 1); ?> />
+                                <?php esc_html_e('Captcha bei Registrierung aktivieren (Cloudflare Turnstile)', 'pinnwand'); ?>
+                            </label>
+                        </div>
+                        <div
+                            id="pw-captcha-details"
+                            class="pw-settings-captcha-details"
+                            <?php if ((int) $settings['registration_captcha_enabled'] !== 1) : ?>
+                                style="display:none;"
+                            <?php endif; ?>
+                        >
+                            <h3><?php esc_html_e('Captcha (Turnstile)', 'pinnwand'); ?></h3>
+                            <p class="description">
+                                <?php
+                                echo wp_kses(
+                                    __(
+                                        'Turnstile Keys erzeugen: <a href="https://dash.cloudflare.com/" target="_blank" rel="noopener noreferrer">Cloudflare Dashboard</a> -> Turnstile -> Widget erstellen. Danach Site Key hier bei "Turnstile Site Key" und Secret Key bei "Turnstile Secret Key" eintragen.',
+                                        'pinnwand'
+                                    ),
+                                    array(
+                                        'a' => array(
+                                            'href' => array(),
+                                            'target' => array(),
+                                            'rel' => array(),
+                                        ),
+                                    )
+                                );
+                                ?>
+                            </p>
+                            <div class="pw-settings-field">
+                                <label for="pw-registration-captcha-site-key"><?php esc_html_e('Turnstile Site Key', 'pinnwand'); ?></label>
+                                <input id="pw-registration-captcha-site-key" type="text" name="<?php echo esc_attr(self::OPTION_KEY); ?>[registration_captcha_site_key]" value="<?php echo esc_attr((string) $settings['registration_captcha_site_key']); ?>" />
+                            </div>
+                            <div class="pw-settings-field">
+                                <label for="pw-registration-captcha-secret-key"><?php esc_html_e('Turnstile Secret Key', 'pinnwand'); ?></label>
+                                <input id="pw-registration-captcha-secret-key" type="password" name="<?php echo esc_attr(self::OPTION_KEY); ?>[registration_captcha_secret_key]" value="<?php echo esc_attr((string) $settings['registration_captcha_secret_key']); ?>" />
+                            </div>
+                        </div>
+                    </section>
+
                     <section class="pw-settings-card">
                         <h2><?php esc_html_e('Anzeige', 'pinnwand'); ?></h2>
                         <p class="description"><?php esc_html_e('Einstellungen zur Anzeige.', 'pinnwand'); ?></p>
@@ -160,92 +241,43 @@ class PW_Settings {
                     </section>
 
                     <section class="pw-settings-card">
-                        <h2><?php esc_html_e('Registrierung', 'pinnwand'); ?></h2>
-                        <p class="description"><?php esc_html_e('Nur Benutzer mit gueltigem Einladungscode koennen sich registrieren.', 'pinnwand'); ?></p>
-                        <p class="description">
-                            <?php
-                            echo wp_kses(
-                                __(
-                                    'Turnstile Keys erzeugen: <a href="https://dash.cloudflare.com/" target="_blank" rel="noopener noreferrer">Cloudflare Dashboard</a> -> Turnstile -> Widget erstellen. Danach Site Key hier bei "Turnstile Site Key" und Secret Key bei "Turnstile Secret Key" eintragen.',
-                                    'pinnwand'
-                                ),
-                                array(
-                                    'a' => array(
-                                        'href' => array(),
-                                        'target' => array(),
-                                        'rel' => array(),
-                                    ),
-                                )
-                            );
-                            ?>
-                        </p>
-                        <div class="pw-settings-field">
-                            <label for="pw-invitation-code"><?php esc_html_e('Einladungscode', 'pinnwand'); ?></label>
-                            <input id="pw-invitation-code" type="text" name="<?php echo esc_attr(self::OPTION_KEY); ?>[invitation_code]" value="<?php echo esc_attr((string) $settings['invitation_code']); ?>" />
-                        </div>
-                        <div class="pw-settings-field">
-                            <label for="pw-invitation-valid-until"><?php esc_html_e('Gueltig bis (Datum)', 'pinnwand'); ?></label>
-                            <input id="pw-invitation-valid-until" type="date" name="<?php echo esc_attr(self::OPTION_KEY); ?>[invitation_valid_until]" value="<?php echo esc_attr((string) $settings['invitation_valid_until']); ?>" />
-                        </div>
-                        <div class="pw-settings-field">
-                            <label for="pw-registration-captcha-enabled">
-                                <input id="pw-registration-captcha-enabled" type="checkbox" name="<?php echo esc_attr(self::OPTION_KEY); ?>[registration_captcha_enabled]" value="1" <?php checked((int) $settings['registration_captcha_enabled'], 1); ?> />
-                                <?php esc_html_e('Captcha bei Registrierung aktivieren (Cloudflare Turnstile)', 'pinnwand'); ?>
-                            </label>
-                        </div>
-                        <div class="pw-settings-field">
-                            <label for="pw-registration-captcha-site-key"><?php esc_html_e('Turnstile Site Key', 'pinnwand'); ?></label>
-                            <input id="pw-registration-captcha-site-key" type="text" name="<?php echo esc_attr(self::OPTION_KEY); ?>[registration_captcha_site_key]" value="<?php echo esc_attr((string) $settings['registration_captcha_site_key']); ?>" />
-                        </div>
-                        <div class="pw-settings-field">
-                            <label for="pw-registration-captcha-secret-key"><?php esc_html_e('Turnstile Secret Key', 'pinnwand'); ?></label>
-                            <input id="pw-registration-captcha-secret-key" type="password" name="<?php echo esc_attr(self::OPTION_KEY); ?>[registration_captcha_secret_key]" value="<?php echo esc_attr((string) $settings['registration_captcha_secret_key']); ?>" />
-                        </div>
-                        <div class="pw-settings-field">
-                            <label><?php esc_html_e('Verwendungen aktuell', 'pinnwand'); ?></label>
-                            <input type="number" value="<?php echo esc_attr((string) ((int) $settings['invitation_usage_count'])); ?>" readonly />
-                        </div>
-                        <p class="description"><?php esc_html_e('Regel: leer oder Vergangenheit = ungueltig, heute oder Zukunft = gueltig.', 'pinnwand'); ?></p>
-                    </section>
-
-                    <section class="pw-settings-card">
                         <h2><?php esc_html_e('Bilder', 'pinnwand'); ?></h2>
                         <p class="description"><?php esc_html_e('Einstellungen fuer Upload und Bildgroesse.', 'pinnwand'); ?></p>
                         <div class="pw-settings-subgrid">
                             <div>
-                                <h3><?php esc_html_e('Maximaler Upload', 'pinnwand'); ?></h3>
+                                <h3><?php esc_html_e('Max. Upload', 'pinnwand'); ?></h3>
                                 <div class="pw-settings-field">
-                                    <label for="pw-max-images"><?php esc_html_e('Maximale Bilder pro Artikel', 'pinnwand'); ?></label>
-                                    <input id="pw-max-images" type="number" min="1" max="20" name="<?php echo esc_attr(self::OPTION_KEY); ?>[max_images]" value="<?php echo esc_attr((string) $settings['max_images']); ?>" />
+                                    <label for="pw-max-images"><?php esc_html_e('Max. Bilder pro Artikel', 'pinnwand'); ?></label>
+                                    <input id="pw-max-images" class="pw-compact-number" type="number" min="1" max="20" name="<?php echo esc_attr(self::OPTION_KEY); ?>[max_images]" value="<?php echo esc_attr((string) $settings['max_images']); ?>" />
                                 </div>
                                 <div class="pw-settings-field">
-                                    <label for="pw-max-image-mb"><?php esc_html_e('Maximale Dateigroesse pro Bild (MB)', 'pinnwand'); ?></label>
-                                    <input id="pw-max-image-mb" type="number" min="1" max="20" name="<?php echo esc_attr(self::OPTION_KEY); ?>[max_image_mb]" value="<?php echo esc_attr((string) $settings['max_image_mb']); ?>" />
+                                    <label for="pw-max-image-mb"><?php esc_html_e('Max. Dateigroesse pro Bild (MB)', 'pinnwand'); ?></label>
+                                    <input id="pw-max-image-mb" class="pw-compact-number" type="number" min="1" max="20" name="<?php echo esc_attr(self::OPTION_KEY); ?>[max_image_mb]" value="<?php echo esc_attr((string) $settings['max_image_mb']); ?>" />
                                 </div>
                                 <div class="pw-settings-field">
-                                    <label for="pw-max-total-mb"><?php esc_html_e('Maximale Gesamtgroesse pro Artikel (MB)', 'pinnwand'); ?></label>
-                                    <input id="pw-max-total-mb" type="number" min="1" max="100" name="<?php echo esc_attr(self::OPTION_KEY); ?>[max_total_image_mb]" value="<?php echo esc_attr((string) $settings['max_total_image_mb']); ?>" />
+                                    <label for="pw-max-total-mb"><?php esc_html_e('Max. Gesamtgroesse pro Artikel (MB)', 'pinnwand'); ?></label>
+                                    <input id="pw-max-total-mb" class="pw-compact-number" type="number" min="1" max="100" name="<?php echo esc_attr(self::OPTION_KEY); ?>[max_total_image_mb]" value="<?php echo esc_attr((string) $settings['max_total_image_mb']); ?>" />
                                 </div>
                             </div>
                             <div>
                                 <h3><?php esc_html_e('Bildergroesse', 'pinnwand'); ?></h3>
                                 <div class="pw-settings-field">
-                                    <label for="pw-image-width"><?php esc_html_e('Maximale Bildbreite (px)', 'pinnwand'); ?></label>
-                                    <input id="pw-image-width" type="number" min="640" max="3840" name="<?php echo esc_attr(self::OPTION_KEY); ?>[image_max_width]" value="<?php echo esc_attr((string) $settings['image_max_width']); ?>" />
+                                    <label for="pw-image-width"><?php esc_html_e('Max. Bildbreite (px)', 'pinnwand'); ?></label>
+                                    <input id="pw-image-width" class="pw-compact-number" type="number" min="640" max="3840" name="<?php echo esc_attr(self::OPTION_KEY); ?>[image_max_width]" value="<?php echo esc_attr((string) $settings['image_max_width']); ?>" />
                                 </div>
                                 <div class="pw-settings-field">
-                                    <label for="pw-image-height"><?php esc_html_e('Maximale Bildhoehe (px)', 'pinnwand'); ?></label>
-                                    <input id="pw-image-height" type="number" min="640" max="3840" name="<?php echo esc_attr(self::OPTION_KEY); ?>[image_max_height]" value="<?php echo esc_attr((string) $settings['image_max_height']); ?>" />
+                                    <label for="pw-image-height"><?php esc_html_e('Max. Bildhoehe (px)', 'pinnwand'); ?></label>
+                                    <input id="pw-image-height" class="pw-compact-number" type="number" min="640" max="3840" name="<?php echo esc_attr(self::OPTION_KEY); ?>[image_max_height]" value="<?php echo esc_attr((string) $settings['image_max_height']); ?>" />
                                 </div>
                                 <div class="pw-settings-field">
                                     <label for="pw-image-quality"><?php esc_html_e('Bildqualitaet (50-95)', 'pinnwand'); ?></label>
-                                    <input id="pw-image-quality" type="number" min="50" max="95" name="<?php echo esc_attr(self::OPTION_KEY); ?>[image_quality]" value="<?php echo esc_attr((string) $settings['image_quality']); ?>" />
+                                    <input id="pw-image-quality" class="pw-compact-number" type="number" min="50" max="95" name="<?php echo esc_attr(self::OPTION_KEY); ?>[image_quality]" value="<?php echo esc_attr((string) $settings['image_quality']); ?>" />
                                 </div>
                             </div>
                         </div>
                     </section>
 
-                    <section class="pw-settings-card pw-settings-row-full">
+                    <section class="pw-settings-card">
                         <h2><?php esc_html_e('Limits fuer Neuerfassung', 'pinnwand'); ?></h2>
                         <p class="description"><?php esc_html_e('Um Missbrauch zu verhindern, koennen verschiedene Maximalwerte erstellt werden.', 'pinnwand'); ?></p>
                         <div class="pw-settings-subgrid-limits">
@@ -267,6 +299,22 @@ class PW_Settings {
 
                 <?php submit_button(); ?>
             </form>
+            <script>
+                (function () {
+                    const checkbox = document.getElementById('pw-registration-captcha-enabled');
+                    const block = document.getElementById('pw-captcha-details');
+                    if (!checkbox || !block) {
+                        return;
+                    }
+
+                    function toggleBlock() {
+                        block.style.display = checkbox.checked ? '' : 'none';
+                    }
+
+                    checkbox.addEventListener('change', toggleBlock);
+                    toggleBlock();
+                })();
+            </script>
         </div>
         <?php
     }

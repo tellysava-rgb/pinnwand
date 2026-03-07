@@ -12,6 +12,10 @@
   max-width: 980px;
 }
 
+.pinnwand-profile-wrap {
+  max-width: 686px;
+}
+
 .pinnwand-detail-layout {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
@@ -215,6 +219,70 @@
   max-width: none;
   min-height: 44px;
   font-size: 1rem;
+}
+
+.pinnwand-profile-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.pinnwand-profile-row {
+  display: grid;
+  gap: 16px;
+}
+
+.pinnwand-profile-row-two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 40px;
+  row-gap: 16px;
+}
+
+.pinnwand-profile-row-zip-city {
+  grid-template-columns: 140px minmax(0, 1fr);
+  column-gap: 24px;
+  row-gap: 16px;
+}
+
+.pinnwand-profile-form .pinnwand-profile-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+}
+
+.pinnwand-profile-form .pinnwand-profile-field > label {
+  display: block;
+  margin-bottom: 4px;
+  width: auto;
+  margin-top: 0;
+  margin-right: 0;
+  margin-left: 0;
+  float: none;
+  clear: none;
+}
+
+.pinnwand-profile-form .pinnwand-profile-field input[type="text"],
+.pinnwand-profile-form .pinnwand-profile-field input[type="email"] {
+  display: block;
+  width: 100%;
+  max-width: none;
+  margin: 2px 0 0;
+  float: none;
+  clear: none;
+}
+
+.pinnwand-profile-form .pinnwand-profile-field-zip input[type="text"] {
+  max-width: 120px;
+}
+
+.pinnwand-profile-submit {
+  margin-top: 4px;
+}
+
+.pinnwand-profile-form input.pinnwand-readonly-input[readonly] {
+  background: #f2f4f7;
+  color: #475467;
+  border-color: #d0d5dd;
 }
 
 .pinnwand-search-form {
@@ -568,6 +636,15 @@
   .pinnwand-dashboard-table td {
     border-bottom: 1px solid #e4e7ec;
     padding: 8px 0;
+  }
+
+  .pinnwand-profile-row-two,
+  .pinnwand-profile-row-zip-city {
+    grid-template-columns: 1fr;
+  }
+
+  .pinnwand-profile-form .pinnwand-profile-field-zip input[type="text"] {
+    max-width: none;
   }
 }
 

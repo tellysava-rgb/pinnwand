@@ -925,7 +925,7 @@ class PW_Public {
         <form method="get" class="pinnwand-search-form" id="pinnwand-search-form">
             <p class="pinnwand-search-item pinnwand-search-item-keyword">
                 <label for="pw-keyword"><?php esc_html_e('Suche', 'pinnwand'); ?></label><br />
-                <input id="pw-keyword" type="text" name="pw_keyword" value="<?php echo esc_attr($keyword); ?>" />
+                <input id="pw-keyword" type="text" name="pw_keyword" value="<?php echo esc_attr($keyword); ?>" placeholder="<?php echo esc_attr__('Suche nach Titel, Beschreibung und Keywords', 'pinnwand'); ?>" />
             </p>
 
             <p class="pinnwand-search-item pinnwand-search-item-borrowed">
@@ -1066,44 +1066,49 @@ class PW_Public {
                 <input type="hidden" name="redirect_url" value="<?php echo esc_url(get_permalink()); ?>" />
                 <?php wp_nonce_field('pinnwand_save_profile', 'pinnwand_profile_nonce'); ?>
 
-                <p>
-                    <label for="pw-first-name"><?php esc_html_e('Vorname', 'pinnwand'); ?></label><br />
-                    <input id="pw-first-name" type="text" name="first_name" required value="<?php echo esc_attr($first_name); ?>" />
-                </p>
+                <div class="pinnwand-profile-grid">
+                    <div class="pinnwand-profile-row pinnwand-profile-row-two">
+                        <div class="pinnwand-profile-field">
+                            <label for="pw-first-name"><?php esc_html_e('Vorname', 'pinnwand'); ?></label>
+                            <input id="pw-first-name" type="text" name="first_name" required value="<?php echo esc_attr($first_name); ?>" />
+                        </div>
+                        <div class="pinnwand-profile-field">
+                            <label for="pw-last-name"><?php esc_html_e('Nachname', 'pinnwand'); ?></label>
+                            <input id="pw-last-name" type="text" name="last_name" required value="<?php echo esc_attr($last_name); ?>" />
+                        </div>
+                    </div>
 
-                <p>
-                    <label for="pw-last-name"><?php esc_html_e('Nachname', 'pinnwand'); ?></label><br />
-                    <input id="pw-last-name" type="text" name="last_name" required value="<?php echo esc_attr($last_name); ?>" />
-                </p>
+                    <div class="pinnwand-profile-row pinnwand-profile-row-two">
+                        <div class="pinnwand-profile-field pinnwand-profile-field-phone">
+                            <label for="pw-phone"><?php esc_html_e('Telefon', 'pinnwand'); ?></label>
+                            <input id="pw-phone" type="text" name="phone" required value="<?php echo esc_attr($phone); ?>" />
+                        </div>
+                        <div class="pinnwand-profile-field pinnwand-profile-field-email">
+                            <label for="pw-email"><?php esc_html_e('E-Mail', 'pinnwand'); ?></label>
+                            <input id="pw-email" class="pinnwand-readonly-input" type="email" name="email" readonly value="<?php echo esc_attr($email); ?>" />
+                        </div>
+                    </div>
 
-                <p>
-                    <label for="pw-email"><?php esc_html_e('E-Mail', 'pinnwand'); ?></label><br />
-                    <input id="pw-email" type="email" name="email" readonly value="<?php echo esc_attr($email); ?>" />
-                </p>
+                    <div class="pinnwand-profile-field">
+                        <label for="pw-address"><?php esc_html_e('Adresse', 'pinnwand'); ?></label>
+                        <input id="pw-address" type="text" name="address" required value="<?php echo esc_attr($address); ?>" />
+                    </div>
 
-                <p>
-                    <label for="pw-phone"><?php esc_html_e('Telefon', 'pinnwand'); ?></label><br />
-                    <input id="pw-phone" type="text" name="phone" required value="<?php echo esc_attr($phone); ?>" />
-                </p>
+                    <div class="pinnwand-profile-row pinnwand-profile-row-zip-city">
+                        <div class="pinnwand-profile-field pinnwand-profile-field-zip">
+                            <label for="pw-zip"><?php esc_html_e('PLZ', 'pinnwand'); ?></label>
+                            <input id="pw-zip" type="text" name="zip" required value="<?php echo esc_attr($zip); ?>" />
+                        </div>
+                        <div class="pinnwand-profile-field">
+                            <label for="pw-city"><?php esc_html_e('Ort', 'pinnwand'); ?></label>
+                            <input id="pw-city" type="text" name="city" required value="<?php echo esc_attr($city); ?>" />
+                        </div>
+                    </div>
 
-                <p>
-                    <label for="pw-address"><?php esc_html_e('Adresse', 'pinnwand'); ?></label><br />
-                    <input id="pw-address" type="text" name="address" required value="<?php echo esc_attr($address); ?>" />
-                </p>
-
-                <p>
-                    <label for="pw-zip"><?php esc_html_e('PLZ', 'pinnwand'); ?></label><br />
-                    <input id="pw-zip" type="text" name="zip" required value="<?php echo esc_attr($zip); ?>" />
-                </p>
-
-                <p>
-                    <label for="pw-city"><?php esc_html_e('Ort', 'pinnwand'); ?></label><br />
-                    <input id="pw-city" type="text" name="city" required value="<?php echo esc_attr($city); ?>" />
-                </p>
-
-                <p>
-                    <button type="submit"><?php esc_html_e('Profil speichern', 'pinnwand'); ?></button>
-                </p>
+                    <div class="pinnwand-profile-submit">
+                        <button type="submit"><?php esc_html_e('Profil speichern', 'pinnwand'); ?></button>
+                    </div>
+                </div>
             </form>
 
             <div class="pinnwand-profile-actions">
