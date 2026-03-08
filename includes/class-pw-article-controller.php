@@ -26,14 +26,21 @@ class PW_Article_Controller {
         $title = isset($_POST['title']) ? sanitize_text_field(wp_unslash($_POST['title'])) : '';
         $content = isset($_POST['description']) ? wp_kses_post(wp_unslash($_POST['description'])) : '';
         $category = isset($_POST['category']) ? (int) $_POST['category'] : 0;
+        $offer_type = isset($_POST['offer_type']) ? sanitize_key(wp_unslash($_POST['offer_type'])) : '';
         $redirect_url = isset($_POST['redirect_url']) ? esc_url_raw(wp_unslash($_POST['redirect_url'])) : '';
 
         if ($category <= 0) {
             $category = $this->get_fallback_category_id();
         }
 
-        if ($title === '' || $content === '' || $category <= 0) {
+        if ($title === '' || $content === '' || $category <= 0 || $offer_type === '') {
             $this->respond_error(__('Pflichtfelder fehlen.', 'pinnwand'), 400, $redirect_url);
+            return;
+        }
+
+        $valid_offer_types = array('verkauf', 'verleih');
+        if (!in_array($offer_type, $valid_offer_types, true)) {
+            $this->respond_error(__('Ungueltige Angebotsart.', 'pinnwand'), 400, $redirect_url);
             return;
         }
 
@@ -102,6 +109,7 @@ class PW_Article_Controller {
             $status = 'available';
         }
         update_post_meta($saved_id, 'pw_status', $status);
+        update_post_meta($saved_id, 'pw_offer_type', $offer_type);
 
         $price = isset($_POST['price']) ? (float) str_replace(',', '.', (string) wp_unslash($_POST['price'])) : 0.0;
         if ($price < 0) {

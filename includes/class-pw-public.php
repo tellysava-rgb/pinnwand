@@ -161,6 +161,10 @@ class PW_Public {
         if ($status === '') {
             $status = 'available';
         }
+        $offer_type = (string) get_post_meta($post_id, 'pw_offer_type', true);
+        if ($offer_type === '') {
+            $offer_type = 'verleih';
+        }
 
         $price = (float) get_post_meta($post_id, 'pw_price', true);
         $categories = wp_get_post_terms($post_id, 'pw_kategorie', array('fields' => 'names'));
@@ -198,6 +202,7 @@ class PW_Public {
         echo '<h3>' . esc_html__('Details', 'pinnwand') . '</h3>';
         echo '<div class="pinnwand-detail-description">' . wp_kses_post($content) . '</div>';
         echo '<ul class="pinnwand-meta-list">';
+        echo '<li><strong>' . esc_html__('Inseratetyp:', 'pinnwand') . '</strong> ' . esc_html($this->translate_offer_type($offer_type)) . '</li>';
         echo '<li><strong>' . esc_html__('Status:', 'pinnwand') . '</strong> ' . esc_html($this->translate_status($status)) . '</li>';
         echo '<li><strong>' . esc_html__('Kategorie:', 'pinnwand') . '</strong> ' . esc_html(!empty($categories) ? implode(', ', $categories) : '-') . '</li>';
         echo '<li><strong>' . esc_html__('Keywords:', 'pinnwand') . '</strong> ' . esc_html(!empty($tags) ? implode(', ', $tags) : '-') . '</li>';
@@ -350,6 +355,10 @@ class PW_Public {
         if ($status === '') {
             $status = 'available';
         }
+        $offer_type = $post ? (string) get_post_meta($post->ID, 'pw_offer_type', true) : 'verleih';
+        if (!in_array($offer_type, array('verkauf', 'verleih'), true)) {
+            $offer_type = 'verleih';
+        }
         $price = $post ? (float) get_post_meta($post->ID, 'pw_price', true) : 0.0;
 
         $categories = get_terms(
@@ -422,6 +431,14 @@ class PW_Public {
                         <p>
                             <label for="pinnwand-description"><?php esc_html_e('Beschreibung', 'pinnwand'); ?></label><br />
                             <textarea id="pinnwand-description" name="description" rows="6" required><?php echo esc_textarea($description); ?></textarea>
+                        </p>
+
+                        <p>
+                            <label for="pinnwand-offer-type"><?php esc_html_e('Inseratetyp', 'pinnwand'); ?></label><br />
+                            <select id="pinnwand-offer-type" name="offer_type" required>
+                                <option value="verleih" <?php selected($offer_type, 'verleih'); ?>><?php esc_html_e('Zu verleihen', 'pinnwand'); ?></option>
+                                <option value="verkauf" <?php selected($offer_type, 'verkauf'); ?>><?php esc_html_e('Zu verkaufen', 'pinnwand'); ?></option>
+                            </select>
                         </p>
 
                         <p>
@@ -913,12 +930,16 @@ class PW_Public {
 
     public function render_search_form(): string {
         $keyword = isset($_GET['pw_keyword']) ? sanitize_text_field(wp_unslash($_GET['pw_keyword'])) : '';
+        $offer_type = isset($_GET['pw_offer_type']) ? sanitize_key(wp_unslash($_GET['pw_offer_type'])) : '';
+        if (!in_array($offer_type, array('', 'verkauf', 'verleih'), true)) {
+            $offer_type = '';
+        }
         $show_borrowed = isset($_GET['pw_show_borrowed']) && $_GET['pw_show_borrowed'] === '1';
         $paged = max(1, (int) ($_GET['pw_page'] ?? 1));
         $settings = PW_Settings::get();
         $title_max_length = (int) ($settings['card_title_max_length'] ?? 40);
 
-        $query = $this->build_search_query($keyword, 0, $show_borrowed, $paged);
+        $query = $this->build_search_query($keyword, 0, $show_borrowed, $offer_type, $paged);
 
         ob_start();
         ?>
@@ -926,6 +947,15 @@ class PW_Public {
             <p class="pinnwand-search-item pinnwand-search-item-keyword">
                 <label for="pw-keyword"><?php esc_html_e('Suche', 'pinnwand'); ?></label><br />
                 <input id="pw-keyword" type="text" name="pw_keyword" value="<?php echo esc_attr($keyword); ?>" placeholder="<?php echo esc_attr__('Suche nach Titel, Beschreibung und Keywords', 'pinnwand'); ?>" />
+            </p>
+
+            <p class="pinnwand-search-item pinnwand-search-item-offer-type">
+                <label for="pw-offer-type"><?php esc_html_e('Inseratetyp', 'pinnwand'); ?></label><br />
+                <select id="pw-offer-type" name="pw_offer_type">
+                    <option value="" <?php selected($offer_type, ''); ?>><?php esc_html_e('Alle', 'pinnwand'); ?></option>
+                    <option value="verleih" <?php selected($offer_type, 'verleih'); ?>><?php esc_html_e('Zu verleihen', 'pinnwand'); ?></option>
+                    <option value="verkauf" <?php selected($offer_type, 'verkauf'); ?>><?php esc_html_e('Zu verkaufen', 'pinnwand'); ?></option>
+                </select>
             </p>
 
             <p class="pinnwand-search-item pinnwand-search-item-borrowed">
@@ -952,6 +982,10 @@ class PW_Public {
                         if ($status === '') {
                             $status = 'available';
                         }
+                        $card_offer_type = (string) get_post_meta($post_id, 'pw_offer_type', true);
+                        if ($card_offer_type === '') {
+                            $card_offer_type = 'verleih';
+                        }
                         $cats = wp_get_post_terms($post_id, 'pw_kategorie', array('fields' => 'names'));
                         $tags = wp_get_post_terms($post_id, 'pw_tag', array('fields' => 'names'));
                         $full_title = $this->normalize_title_text(get_the_title($post_id));
@@ -966,6 +1000,7 @@ class PW_Public {
                                 <?php endif; ?>
                             </a>
                             <h3 class="pinnwand-card-title"><a href="<?php the_permalink(); ?>" title="<?php echo esc_attr($full_title); ?>"><?php echo esc_html($display_title); ?></a></h3>
+                            <p class="pinnwand-card-meta"><strong><?php esc_html_e('Inseratetyp:', 'pinnwand'); ?></strong> <?php echo esc_html($this->translate_offer_type($card_offer_type)); ?></p>
                             <p class="pinnwand-card-meta"><strong><?php esc_html_e('Status:', 'pinnwand'); ?></strong> <?php echo esc_html($this->translate_status($status)); ?></p>
                             <p class="pinnwand-card-meta"><strong><?php esc_html_e('Kategorie:', 'pinnwand'); ?></strong> <?php echo esc_html(!empty($cats) ? implode(', ', is_array($cats) ? $cats : array()) : '-'); ?></p>
                             <p class="pinnwand-card-meta">
@@ -1130,7 +1165,7 @@ class PW_Public {
         return (string) ob_get_clean();
     }
 
-    private function build_search_query(string $keyword, int $category, bool $show_borrowed, int $paged): WP_Query {
+    private function build_search_query(string $keyword, int $category, bool $show_borrowed, string $offer_type, int $paged): WP_Query {
         $sort_args = $this->get_listing_sort_args();
         $statuses = array('available');
         if ($show_borrowed) {
@@ -1138,17 +1173,28 @@ class PW_Public {
         }
 
         $meta_query = array(
-            'relation' => 'OR',
+            'relation' => 'AND',
             array(
-                'key' => 'pw_status',
-                'value' => $statuses,
-                'compare' => 'IN',
-            ),
-            array(
-                'key' => 'pw_status',
-                'compare' => 'NOT EXISTS',
+                'relation' => 'OR',
+                array(
+                    'key' => 'pw_status',
+                    'value' => $statuses,
+                    'compare' => 'IN',
+                ),
+                array(
+                    'key' => 'pw_status',
+                    'compare' => 'NOT EXISTS',
+                ),
             ),
         );
+
+        if (in_array($offer_type, array('verkauf', 'verleih'), true)) {
+            $meta_query[] = array(
+                'key' => 'pw_offer_type',
+                'value' => $offer_type,
+                'compare' => '=',
+            );
+        }
 
         $base_args = array(
             'post_type' => 'pw_artikel',
@@ -1247,6 +1293,14 @@ class PW_Public {
         }
 
         return __('Verfuegbar', 'pinnwand');
+    }
+
+    private function translate_offer_type(string $offer_type): string {
+        if ($offer_type === 'verkauf') {
+            return __('Zu verkaufen', 'pinnwand');
+        }
+
+        return __('Zu verleihen', 'pinnwand');
     }
 
     private function can_manage_articles(): bool {

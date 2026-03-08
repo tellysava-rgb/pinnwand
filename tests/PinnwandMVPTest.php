@@ -40,12 +40,12 @@ class PinnwandMVPTest extends WP_UnitTestCase {
         $this->assertArrayHasKey('pw_profile_form', $shortcode_tags);
     }
 
-    public function test_search_form_contains_keyword_and_borrowed_checkbox_only(): void {
+    public function test_search_form_contains_keyword_borrowed_and_offer_type_filter(): void {
         $out = do_shortcode('[pw_search_form]');
 
         $this->assertStringContainsString('name="pw_keyword"', $out);
         $this->assertStringContainsString('name="pw_show_borrowed"', $out);
-        $this->assertStringNotContainsString('name="pw_category"', $out);
+        $this->assertStringContainsString('name="pw_offer_type"', $out);
     }
 
     public function test_search_default_excludes_borrowed_and_option_includes_it(): void {
@@ -58,6 +58,7 @@ class PinnwandMVPTest extends WP_UnitTestCase {
             )
         );
         update_post_meta($available_id, 'pw_status', 'available');
+        update_post_meta($available_id, 'pw_offer_type', 'verleih');
 
         $borrowed_id = self::factory()->post->create(
             array(
@@ -68,6 +69,7 @@ class PinnwandMVPTest extends WP_UnitTestCase {
             )
         );
         update_post_meta($borrowed_id, 'pw_status', 'borrowed');
+        update_post_meta($borrowed_id, 'pw_offer_type', 'verleih');
 
         $previous_get = $_GET;
 
@@ -94,6 +96,7 @@ class PinnwandMVPTest extends WP_UnitTestCase {
             )
         );
         update_post_meta($post_id, 'pw_status', 'available');
+        update_post_meta($post_id, 'pw_offer_type', 'verleih');
         wp_set_object_terms($post_id, array('haushalt'), 'pw_tag', false);
 
         $previous_get = $_GET;
@@ -197,8 +200,8 @@ class PinnwandMVPTest extends WP_UnitTestCase {
 
         $out = do_shortcode('[pw_article_form]');
 
-        $this->assertStringContainsString('pinnwand-tag-suggestions', $out);
-        $this->assertStringContainsString('garten', $out);
+        $this->assertStringContainsString('pinnwand-tag-live-suggestions', $out);
+        $this->assertStringContainsString('action=pinnwand_tag_suggestions', $out);
     }
 
     public function test_subscriber_can_create_pw_artikel(): void {
@@ -219,6 +222,43 @@ class PinnwandMVPTest extends WP_UnitTestCase {
 
         $this->assertIsInt($post_id);
         $this->assertGreaterThan(0, $post_id);
+    }
+
+    public function test_offer_type_filter_in_search(): void {
+        $sale_id = self::factory()->post->create(
+            array(
+                'post_type' => 'pw_artikel',
+                'post_status' => 'publish',
+                'post_title' => 'Velo Verkauf',
+                'post_author' => $this->owner_id,
+            )
+        );
+        update_post_meta($sale_id, 'pw_status', 'available');
+        update_post_meta($sale_id, 'pw_offer_type', 'verkauf');
+
+        $lend_id = self::factory()->post->create(
+            array(
+                'post_type' => 'pw_artikel',
+                'post_status' => 'publish',
+                'post_title' => 'Velo Verleih',
+                'post_author' => $this->owner_id,
+            )
+        );
+        update_post_meta($lend_id, 'pw_status', 'available');
+        update_post_meta($lend_id, 'pw_offer_type', 'verleih');
+
+        $previous_get = $_GET;
+        $_GET = array('pw_offer_type' => 'verkauf');
+        $sale_out = do_shortcode('[pw_search_form]');
+        $this->assertStringContainsString('Velo Verkauf', $sale_out);
+        $this->assertStringNotContainsString('Velo Verleih', $sale_out);
+
+        $_GET = array('pw_offer_type' => 'verleih');
+        $lend_out = do_shortcode('[pw_search_form]');
+        $this->assertStringContainsString('Velo Verleih', $lend_out);
+        $this->assertStringNotContainsString('Velo Verkauf', $lend_out);
+
+        $_GET = $previous_get;
     }
 
     public function test_owner_can_update_existing_article(): void {

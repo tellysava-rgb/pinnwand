@@ -286,31 +286,64 @@
 }
 
 .pinnwand-search-form {
-  display: flex;
-  align-items: flex-end;
-  gap: 14px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(280px, 40%) 220px auto auto;
+  grid-template-areas: "keyword offer borrowed submit";
+  align-items: end;
+  gap: 12px 14px;
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 12px;
+  border: 1px solid #d8dbe0;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ffffff 0%, #f7f8fa 100%);
 }
 
 .pinnwand-search-item {
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .pinnwand-search-item-keyword {
-  flex: 1 1 620px;
-  margin-right: 10px;
+  grid-area: keyword;
+  min-width: 0;
 }
 
 .pinnwand-search-item-borrowed {
-  min-height: 44px;
+  grid-area: borrowed;
   display: flex;
   align-items: center;
+  min-height: 44px;
+  padding-bottom: 2px;
+  white-space: nowrap;
+}
+
+.pinnwand-search-item-offer-type select {
+  min-height: 44px;
+}
+
+.pinnwand-search-item-offer-type {
+  grid-area: offer;
+  width: 220px;
+  min-width: 220px;
+}
+
+.pinnwand-search-item-offer-type select {
+  width: 100%;
+}
+
+.pinnwand-search-item-submit {
+  grid-area: submit;
+  align-self: end;
 }
 
 .pinnwand-search-item-borrowed label {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  margin: 0;
 }
 
 .pinnwand-search-item-borrowed input[type="checkbox"] {
@@ -320,9 +353,43 @@
 
 .pinnwand-search-item-submit button {
   min-height: 44px;
-  padding: 0 16px;
+  padding: 0 18px;
   font-size: 1rem;
   line-height: 1;
+}
+
+.pinnwand-search-form input[type="text"],
+.pinnwand-search-form select {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.pinnwand-search-form label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+@media (max-width: 1180px) {
+  .pinnwand-search-form {
+    grid-template-columns: 220px auto;
+    grid-template-areas:
+      "keyword keyword"
+      "offer borrowed"
+      "submit submit";
+  }
+
+  .pinnwand-search-item-offer-type {
+    width: 220px;
+    min-width: 220px;
+  }
+
+  .pinnwand-search-item-submit {
+    justify-self: start;
+  }
 }
 
 .pinnwand-article-form button[type="submit"] {
@@ -608,11 +675,18 @@
   }
 
   .pinnwand-search-form {
-    display: block;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "keyword"
+      "offer"
+      "borrowed"
+      "submit";
+    align-items: end;
   }
 
-  .pinnwand-search-item {
-    margin-bottom: 10px;
+  .pinnwand-search-item-borrowed {
+    justify-content: flex-start;
+    padding-bottom: 0;
   }
 
   .pinnwand-card-grid {
@@ -655,6 +729,10 @@
 }
 
 @media (max-width: 600px) {
+  .pinnwand-search-form {
+    grid-template-columns: 1fr;
+  }
+
   .pinnwand-card-grid {
     grid-template-columns: 1fr;
   }
