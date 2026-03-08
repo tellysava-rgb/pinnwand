@@ -61,6 +61,9 @@ class PW {
         add_action('init', array($public, 'register_shortcodes'));
         add_action('template_redirect', array($public, 'protect_single_article'));
         add_action('wp_enqueue_scripts', array($public, 'enqueue_assets'), 99);
+        add_action('admin_init', array($public, 'restrict_backend_for_board_users'));
+        add_filter('show_admin_bar', array($public, 'hide_admin_bar_for_board_users'));
+        add_filter('login_redirect', array($public, 'redirect_non_admin_after_login'), 10, 3);
         add_action('wp_ajax_pinnwand_tag_suggestions', array($public, 'ajax_tag_suggestions'));
         add_action('register_form', array($public, 'render_registration_code_field'));
         add_filter('registration_errors', array($public, 'validate_registration_code'), 10, 3);

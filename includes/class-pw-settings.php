@@ -83,6 +83,16 @@ class PW_Settings {
         }
 
         $settings = self::get();
+        $invitation_code = trim((string) $settings['invitation_code']);
+        $registration_url = wp_registration_url();
+        if ($invitation_code !== '') {
+            $registration_url = add_query_arg('invite', $invitation_code, $registration_url);
+        }
+        $registration_url_parts = wp_parse_url($registration_url);
+        $registration_url_short = (string) ($registration_url_parts['path'] ?? '/wp-login.php');
+        if (!empty($registration_url_parts['query'])) {
+            $registration_url_short .= '?' . (string) $registration_url_parts['query'];
+        }
         ?>
         <div class="wrap">
             <h1><?php esc_html_e('Pinnwand Einstellungen', 'pinnwand'); ?></h1>
@@ -137,6 +147,17 @@ class PW_Settings {
                 .pw-settings-captcha-details {
                     margin-top: 12px;
                 }
+                .pw-settings-registration-link {
+                    margin-bottom: 12px;
+                    font-size: 13px;
+                    line-height: 1.4;
+                }
+                .pw-settings-registration-link-text {
+                    display: inline-block;
+                    max-width: 100%;
+                    overflow-wrap: anywhere;
+                    margin-left: 6px;
+                }
                 .pw-settings-card-images .pw-settings-subgrid {
                     grid-template-columns: repeat(2, minmax(220px, 1fr));
                     align-items: start;
@@ -175,6 +196,13 @@ class PW_Settings {
                             <label><?php esc_html_e('Verwendungen aktuell', 'pinnwand'); ?></label>
                             <input type="number" value="<?php echo esc_attr((string) ((int) $settings['invitation_usage_count'])); ?>" readonly />
                         </div>
+                        <p class="description pw-settings-registration-link">
+                            <strong><?php esc_html_e('Hier der Registrierungslink:', 'pinnwand'); ?></strong>
+                            <a class="pw-settings-registration-link-text" href="<?php echo esc_url($registration_url); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html($registration_url_short); ?></a>
+                            <button type="button" class="button-link pw-copy-registration-link" data-copy-url="<?php echo esc_attr($registration_url); ?>">
+                                <?php esc_html_e('Link kopieren', 'pinnwand'); ?>
+                            </button>
+                        </p>
                         <p class="description"><?php esc_html_e('Regel: leer oder Vergangenheit = ungueltig, heute oder Zukunft = gueltig.', 'pinnwand'); ?></p>
                     </section>
 
@@ -303,16 +331,50 @@ class PW_Settings {
                 (function () {
                     const checkbox = document.getElementById('pw-registration-captcha-enabled');
                     const block = document.getElementById('pw-captcha-details');
+                    const copyButton = document.querySelector('.pw-copy-registration-link');
                     if (!checkbox || !block) {
+                        // Continue: copy button may still exist if captcha elements are missing.
+                    } else {
+                        function toggleBlock() {
+                            block.style.display = checkbox.checked ? '' : 'none';
+                        }
+
+                        checkbox.addEventListener('change', toggleBlock);
+                        toggleBlock();
+                    }
+
+                    if (!copyButton) {
                         return;
                     }
 
-                    function toggleBlock() {
-                        block.style.display = checkbox.checked ? '' : 'none';
-                    }
+                    copyButton.addEventListener('click', async function () {
+                        const copyUrl = copyButton.getAttribute('data-copy-url') || '';
+                        if (!copyUrl) {
+                            return;
+                        }
 
-                    checkbox.addEventListener('change', toggleBlock);
-                    toggleBlock();
+                        try {
+                            if (navigator.clipboard && navigator.clipboard.writeText) {
+                                await navigator.clipboard.writeText(copyUrl);
+                            } else {
+                                const temp = document.createElement('textarea');
+                                temp.value = copyUrl;
+                                temp.setAttribute('readonly', 'readonly');
+                                temp.style.position = 'absolute';
+                                temp.style.left = '-9999px';
+                                document.body.appendChild(temp);
+                                temp.select();
+                                document.execCommand('copy');
+                                document.body.removeChild(temp);
+                            }
+                            copyButton.textContent = '<?php echo esc_js(__('Kopiert', 'pinnwand')); ?>';
+                            window.setTimeout(function () {
+                                copyButton.textContent = '<?php echo esc_js(__('Link kopieren', 'pinnwand')); ?>';
+                            }, 1400);
+                        } catch (e) {
+                            // Ignore clipboard errors.
+                        }
+                    });
                 })();
             </script>
         </div>

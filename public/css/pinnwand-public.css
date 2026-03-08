@@ -373,6 +373,11 @@
   font-weight: 600;
 }
 
+.pinnwand-required {
+  font-weight: 700;
+  margin-left: 2px;
+}
+
 @media (max-width: 1180px) {
   .pinnwand-search-form {
     grid-template-columns: 220px auto;

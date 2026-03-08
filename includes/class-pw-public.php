@@ -27,6 +27,49 @@ class PW_Public {
         PW_Security::safe_redirect($login_url, wp_login_url());
     }
 
+    public function restrict_backend_for_board_users(): void {
+        if (!is_user_logged_in() || current_user_can('manage_options')) {
+            return;
+        }
+
+        if (wp_doing_ajax()) {
+            return;
+        }
+
+        global $pagenow;
+        $allowed_pages = array('admin-post.php', 'admin-ajax.php', 'async-upload.php');
+        if (in_array((string) $pagenow, $allowed_pages, true)) {
+            return;
+        }
+
+        PW_Security::safe_redirect(home_url('/'));
+    }
+
+    public function hide_admin_bar_for_board_users(bool $show): bool {
+        if (!is_user_logged_in()) {
+            return $show;
+        }
+
+        if (current_user_can('manage_options')) {
+            return $show;
+        }
+
+        return false;
+    }
+
+    public function redirect_non_admin_after_login(string $redirect_to, string $requested_redirect_to, $user): string {
+        if (!$user instanceof WP_User || user_can($user, 'manage_options')) {
+            return $redirect_to;
+        }
+
+        $requested_redirect_to = trim($requested_redirect_to);
+        if ($requested_redirect_to !== '' && strpos($requested_redirect_to, admin_url()) !== 0) {
+            return $requested_redirect_to;
+        }
+
+        return home_url('/');
+    }
+
     public function enqueue_assets(): void {
         $style_path = PINNWAND_PLUGIN_DIR . 'public/css/pinnwand-public.css';
         if (!file_exists($style_path)) {
@@ -85,6 +128,9 @@ class PW_Public {
     public function render_registration_code_field(): void {
         $settings = PW_Settings::get();
         $entered = isset($_POST['pinnwand_invitation_code']) ? sanitize_text_field(wp_unslash((string) $_POST['pinnwand_invitation_code'])) : '';
+        if ($entered === '' && isset($_GET['invite'])) {
+            $entered = strtoupper(trim(sanitize_text_field(wp_unslash((string) $_GET['invite']))));
+        }
         $captcha_enabled = (int) ($settings['registration_captcha_enabled'] ?? 0) === 1;
         $captcha_site_key = (string) ($settings['registration_captcha_site_key'] ?? '');
 
@@ -342,6 +388,13 @@ class PW_Public {
             }
         }
 
+        if ($post_id <= 0 && !$this->is_profile_complete(get_current_user_id())) {
+            $profile_url = $this->get_profile_page_url();
+            return '<div class="pinnwand-notice pinnwand-notice-error">' .
+                esc_html__('Bitte Profil vollstaendig ausfuellen. Diese Angaben werden fuer die Kontaktaufnahme benoetigt.', 'pinnwand') .
+                ' <a href="' . esc_url($profile_url) . '">' . esc_html__('Zum Profil', 'pinnwand') . '</a></div>';
+        }
+
         $title = $post ? $post->post_title : '';
         $description = $post ? $post->post_content : '';
         $selected_category = 0;
@@ -424,17 +477,17 @@ class PW_Public {
                 <div class="pinnwand-edit-layout">
                     <div class="pinnwand-edit-left">
                         <p>
-                            <label for="pinnwand-title"><?php esc_html_e('Titel', 'pinnwand'); ?></label><br />
+                            <label for="pinnwand-title"><?php esc_html_e('Titel', 'pinnwand'); ?> <span class="pinnwand-required">*</span></label><br />
                             <input id="pinnwand-title" type="text" name="title" required value="<?php echo esc_attr($title); ?>" />
                         </p>
 
                         <p>
-                            <label for="pinnwand-description"><?php esc_html_e('Beschreibung', 'pinnwand'); ?></label><br />
+                            <label for="pinnwand-description"><?php esc_html_e('Beschreibung', 'pinnwand'); ?> <span class="pinnwand-required">*</span></label><br />
                             <textarea id="pinnwand-description" name="description" rows="6" required><?php echo esc_textarea($description); ?></textarea>
                         </p>
 
                         <p>
-                            <label for="pinnwand-offer-type"><?php esc_html_e('Inseratetyp', 'pinnwand'); ?></label><br />
+                            <label for="pinnwand-offer-type"><?php esc_html_e('Inseratetyp', 'pinnwand'); ?> <span class="pinnwand-required">*</span></label><br />
                             <select id="pinnwand-offer-type" name="offer_type" required>
                                 <option value="verleih" <?php selected($offer_type, 'verleih'); ?>><?php esc_html_e('Zu verleihen', 'pinnwand'); ?></option>
                                 <option value="verkauf" <?php selected($offer_type, 'verkauf'); ?>><?php esc_html_e('Zu verkaufen', 'pinnwand'); ?></option>
@@ -442,7 +495,7 @@ class PW_Public {
                         </p>
 
                         <p>
-                            <label for="pinnwand-category"><?php esc_html_e('Kategorie', 'pinnwand'); ?></label><br />
+                            <label for="pinnwand-category"><?php esc_html_e('Kategorie', 'pinnwand'); ?> <span class="pinnwand-required">*</span></label><br />
                             <select id="pinnwand-category" name="category" required>
                                 <option value=""><?php esc_html_e('Bitte waehlen', 'pinnwand'); ?></option>
                                 <?php foreach ($categories as $category) : ?>
@@ -1092,10 +1145,12 @@ class PW_Public {
         $address = (string) get_user_meta($user_id, 'pw_address', true);
         $zip = (string) get_user_meta($user_id, 'pw_zip', true);
         $city = (string) get_user_meta($user_id, 'pw_city', true);
+        $notice = $this->render_request_notice();
 
         ob_start();
         ?>
         <div class="pinnwand-profile-wrap">
+            <?php echo $notice; ?>
             <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="pinnwand-profile-form">
                 <input type="hidden" name="action" value="pinnwand_save_profile" />
                 <input type="hidden" name="redirect_url" value="<?php echo esc_url(get_permalink()); ?>" />
@@ -1104,38 +1159,38 @@ class PW_Public {
                 <div class="pinnwand-profile-grid">
                     <div class="pinnwand-profile-row pinnwand-profile-row-two">
                         <div class="pinnwand-profile-field">
-                            <label for="pw-first-name"><?php esc_html_e('Vorname', 'pinnwand'); ?></label>
+                            <label for="pw-first-name"><?php esc_html_e('Vorname', 'pinnwand'); ?> <span class="pinnwand-required">*</span></label>
                             <input id="pw-first-name" type="text" name="first_name" required value="<?php echo esc_attr($first_name); ?>" />
                         </div>
                         <div class="pinnwand-profile-field">
-                            <label for="pw-last-name"><?php esc_html_e('Nachname', 'pinnwand'); ?></label>
+                            <label for="pw-last-name"><?php esc_html_e('Nachname', 'pinnwand'); ?> <span class="pinnwand-required">*</span></label>
                             <input id="pw-last-name" type="text" name="last_name" required value="<?php echo esc_attr($last_name); ?>" />
                         </div>
                     </div>
 
                     <div class="pinnwand-profile-row pinnwand-profile-row-two">
                         <div class="pinnwand-profile-field pinnwand-profile-field-phone">
-                            <label for="pw-phone"><?php esc_html_e('Telefon', 'pinnwand'); ?></label>
+                            <label for="pw-phone"><?php esc_html_e('Telefon', 'pinnwand'); ?> <span class="pinnwand-required">*</span></label>
                             <input id="pw-phone" type="text" name="phone" required value="<?php echo esc_attr($phone); ?>" />
                         </div>
                         <div class="pinnwand-profile-field pinnwand-profile-field-email">
-                            <label for="pw-email"><?php esc_html_e('E-Mail', 'pinnwand'); ?></label>
+                            <label for="pw-email"><?php esc_html_e('E-Mail', 'pinnwand'); ?> <span class="pinnwand-required">*</span></label>
                             <input id="pw-email" class="pinnwand-readonly-input" type="email" name="email" readonly value="<?php echo esc_attr($email); ?>" />
                         </div>
                     </div>
 
                     <div class="pinnwand-profile-field">
-                        <label for="pw-address"><?php esc_html_e('Adresse', 'pinnwand'); ?></label>
+                        <label for="pw-address"><?php esc_html_e('Adresse', 'pinnwand'); ?> <span class="pinnwand-required">*</span></label>
                         <input id="pw-address" type="text" name="address" required value="<?php echo esc_attr($address); ?>" />
                     </div>
 
                     <div class="pinnwand-profile-row pinnwand-profile-row-zip-city">
                         <div class="pinnwand-profile-field pinnwand-profile-field-zip">
-                            <label for="pw-zip"><?php esc_html_e('PLZ', 'pinnwand'); ?></label>
+                            <label for="pw-zip"><?php esc_html_e('PLZ', 'pinnwand'); ?> <span class="pinnwand-required">*</span></label>
                             <input id="pw-zip" type="text" name="zip" required value="<?php echo esc_attr($zip); ?>" />
                         </div>
                         <div class="pinnwand-profile-field">
-                            <label for="pw-city"><?php esc_html_e('Ort', 'pinnwand'); ?></label>
+                            <label for="pw-city"><?php esc_html_e('Ort', 'pinnwand'); ?> <span class="pinnwand-required">*</span></label>
                             <input id="pw-city" type="text" name="city" required value="<?php echo esc_attr($city); ?>" />
                         </div>
                     </div>
@@ -1348,6 +1403,73 @@ class PW_Public {
         }
 
         return array('orderby' => 'date', 'order' => 'DESC');
+    }
+
+    private function is_profile_complete(int $user_id): bool {
+        if ($user_id <= 0) {
+            return false;
+        }
+
+        $user = get_userdata($user_id);
+        if (!$user || !is_email((string) $user->user_email)) {
+            return false;
+        }
+
+        $required_values = array(
+            (string) get_user_meta($user_id, 'first_name', true),
+            (string) get_user_meta($user_id, 'last_name', true),
+            (string) get_user_meta($user_id, 'pw_phone', true),
+            (string) get_user_meta($user_id, 'pw_address', true),
+            (string) get_user_meta($user_id, 'pw_zip', true),
+            (string) get_user_meta($user_id, 'pw_city', true),
+        );
+
+        foreach ($required_values as $value) {
+            if (trim($value) === '') {
+                return false;
+            }
+        }
+
+        return preg_match('/^\d{4,5}$/', trim((string) get_user_meta($user_id, 'pw_zip', true))) === 1;
+    }
+
+    private function get_profile_page_url(): string {
+        $current_id = get_queried_object_id();
+        if ($current_id > 0) {
+            $current = get_post($current_id);
+            if ($current instanceof WP_Post && has_shortcode((string) $current->post_content, 'pw_profile_form')) {
+                $url = get_permalink($current->ID);
+                if (is_string($url) && $url !== '') {
+                    return $url;
+                }
+            }
+        }
+
+        $pages = get_posts(
+            array(
+                'post_type' => 'page',
+                'post_status' => 'publish',
+                'posts_per_page' => 50,
+                'orderby' => 'menu_order title',
+                'order' => 'ASC',
+            )
+        );
+
+        foreach ($pages as $page) {
+            if ($page instanceof WP_Post && has_shortcode((string) $page->post_content, 'pw_profile_form')) {
+                $url = get_permalink($page->ID);
+                if (is_string($url) && $url !== '') {
+                    return $url;
+                }
+            }
+        }
+
+        $fallback = get_permalink();
+        if (is_string($fallback) && $fallback !== '') {
+            return $fallback;
+        }
+
+        return home_url('/');
     }
 
     private function is_invitation_date_valid(string $valid_until): bool {
