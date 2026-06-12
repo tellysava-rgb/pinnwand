@@ -26,6 +26,15 @@ class PW_Settings {
             'pinnwand-settings',
             array($this, 'render_settings_page')
         );
+
+        add_submenu_page(
+            'pinnwand-settings',
+            __('Alle Inserate', 'pinnwand'),
+            __('Alle Inserate', 'pinnwand'),
+            'manage_options',
+            'pinnwand-all-articles',
+            array($this, 'render_articles_page')
+        );
     }
 
     public function register_settings(): void {
@@ -96,6 +105,49 @@ class PW_Settings {
         ?>
         <div class="wrap">
             <h1><?php esc_html_e('Pinnwand Einstellungen', 'pinnwand'); ?></h1>
+
+            <section class="pw-settings-shortcodes">
+                <h2><?php esc_html_e('Shortcode-Referenz', 'pinnwand'); ?></h2>
+                <p class="description"><?php esc_html_e('Die folgenden Shortcodes koennen auf beliebigen WordPress-Seiten eingesetzt werden.', 'pinnwand'); ?></p>
+
+                <table class="widefat pw-shortcode-table" style="margin-top:12px;">
+                    <thead>
+                        <tr>
+                            <th style="width:30%"><?php esc_html_e('Shortcode', 'pinnwand'); ?></th>
+                            <th><?php esc_html_e('Beschreibung', 'pinnwand'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>[pw_search_form]</code></td>
+                            <td><?php esc_html_e('Zeigt die Suchmaske mit allen Inseraten (Verleih + Verkauf). Besucher koennen nach Inseratetyp filtern und ausgeliehene Artikel einblenden.', 'pinnwand'); ?></td>
+                        </tr>
+                        <tr>
+                            <td><code>[pw_search_form offer_type="verleih"]</code></td>
+                            <td><?php esc_html_e('Zeigt nur Verleih-Inserate. Der Inseratetyp-Filter wird ausgeblendet. Die Checkbox "Ausgeliehene anzeigen" bleibt verfuegbar.', 'pinnwand'); ?></td>
+                        </tr>
+                        <tr>
+                            <td><code>[pw_search_form offer_type="verkauf"]</code></td>
+                            <td><?php esc_html_e('Zeigt nur Verkaufs-Inserate. Der Inseratetyp-Filter und die Checkbox "Ausgeliehene anzeigen" werden ausgeblendet.', 'pinnwand'); ?></td>
+                        </tr>
+                        <tr>
+                            <td><code>[pw_article_form]</code></td>
+                            <td><?php esc_html_e('Formular zum Erfassen und Bearbeiten von Artikeln. Nur fuer eingeloggte Benutzer mit entsprechender Berechtigung sichtbar.', 'pinnwand'); ?></td>
+                        </tr>
+                        <tr>
+                            <td><code>[pw_user_dashboard]</code></td>
+                            <td><?php esc_html_e('Uebersicht aller eigenen Inserate mit Bearbeitungs- und Loeschfunktion. Nur fuer eingeloggte Benutzer.', 'pinnwand'); ?></td>
+                        </tr>
+                        <tr>
+                            <td><code>[pw_profile_form]</code></td>
+                            <td><?php esc_html_e('Profilformular fuer Name, Telefon, Adresse. Enthaelt auch Datenexport und Profil-Loeschung. Nur fuer eingeloggte Benutzer.', 'pinnwand'); ?></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <hr style="margin: 32px 0;" />
+
             <form method="post" action="options.php">
                 <?php settings_fields('pinnwand_settings_group'); ?>
                 <div class="pw-settings-grid">
@@ -245,6 +297,139 @@ class PW_Settings {
 
                 <?php submit_button(); ?>
             </form>
+        </div>
+        <?php
+    }
+
+    public function render_articles_page(): void {
+        if (!current_user_can('manage_options')) {
+            wp_die(esc_html__('Keine Berechtigung.', 'pinnwand'));
+        }
+
+        $posts = get_posts(
+            array(
+                'post_type'              => 'pw_artikel',
+                'post_status'            => 'publish',
+                'posts_per_page'         => -1,
+                'orderby'                => 'date',
+                'order'                  => 'DESC',
+                'update_post_meta_cache' => true,
+                'update_post_term_cache' => true,
+            )
+        );
+
+        $author_ids = array_values(array_unique(array_map(static function ($p) {
+            return (int) $p->post_author;
+        }, $posts)));
+        if (!empty($author_ids)) {
+            get_users(array('include' => $author_ids, 'fields' => 'all'));
+        }
+
+        $role_labels = array(
+            'administrator'    => __('Administrator', 'pinnwand'),
+            'pinnwand_nutzer'  => __('Pinnwand-Nutzer', 'pinnwand'),
+            'editor'           => __('Redakteur', 'pinnwand'),
+            'author'           => __('Autor', 'pinnwand'),
+            'subscriber'       => __('Abonnent', 'pinnwand'),
+        );
+        ?>
+        <div class="wrap">
+            <h1><?php esc_html_e('Alle Inserate', 'pinnwand'); ?></h1>
+            <p class="description">
+                <?php
+                echo esc_html(
+                    sprintf(
+                        /* translators: %d number of articles */
+                        _n('%d Inserat', '%d Inserate', count($posts), 'pinnwand'),
+                        count($posts)
+                    )
+                );
+                ?>
+            </p>
+
+            <?php if (empty($posts)) : ?>
+                <p><?php esc_html_e('Keine Inserate vorhanden.', 'pinnwand'); ?></p>
+            <?php else : ?>
+                <table class="widefat striped pw-articles-overview-table" style="margin-top:16px;">
+                    <thead>
+                        <tr>
+                            <th><?php esc_html_e('Inseratetyp', 'pinnwand'); ?></th>
+                            <th><?php esc_html_e('Titel', 'pinnwand'); ?></th>
+                            <th><?php esc_html_e('Kategorie', 'pinnwand'); ?></th>
+                            <th><?php esc_html_e('Preis / Gebuehr', 'pinnwand'); ?></th>
+                            <th><?php esc_html_e('Status', 'pinnwand'); ?></th>
+                            <th><?php esc_html_e('Benutzername', 'pinnwand'); ?></th>
+                            <th><?php esc_html_e('E-Mail', 'pinnwand'); ?></th>
+                            <th><?php esc_html_e('Rolle', 'pinnwand'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($posts as $post) :
+                            $offer_type = (string) get_post_meta($post->ID, 'pw_offer_type', true);
+                            $status     = (string) get_post_meta($post->ID, 'pw_status', true);
+                            $price      = (float)  get_post_meta($post->ID, 'pw_price', true);
+
+                            $offer_type_label = $offer_type === 'verkauf'
+                                ? __('Zu verkaufen', 'pinnwand')
+                                : __('Zu verleihen', 'pinnwand');
+
+                            $status_labels = array(
+                                'available'   => __('Verfuegbar', 'pinnwand'),
+                                'borrowed'    => __('Ausgeliehen', 'pinnwand'),
+                                'unavailable' => __('Nicht verfuegbar', 'pinnwand'),
+                            );
+                            $status_label = $status_labels[$status] ?? __('Verfuegbar', 'pinnwand');
+
+                            $cats = wp_get_post_terms($post->ID, 'pw_kategorie', array('fields' => 'names'));
+                            $cat_label = (!is_wp_error($cats) && !empty($cats))
+                                ? implode(', ', $cats)
+                                : '—';
+
+                            $author   = get_userdata((int) $post->post_author);
+                            $username = $author ? esc_html($author->user_login) : '—';
+                            $email    = $author ? esc_html($author->user_email) : '—';
+
+                            $roles      = $author ? (array) $author->roles : array();
+                            $role_label = '—';
+                            foreach ($roles as $role) {
+                                if (isset($role_labels[$role])) {
+                                    $role_label = $role_labels[$role];
+                                    break;
+                                }
+                            }
+
+                            $permalink = get_permalink($post->ID);
+                        ?>
+                            <tr>
+                                <td><?php echo esc_html($offer_type_label); ?></td>
+                                <td>
+                                    <?php if ($permalink) : ?>
+                                        <a href="<?php echo esc_url($permalink); ?>" target="_blank" rel="noopener noreferrer">
+                                            <?php echo esc_html($post->post_title); ?>
+                                        </a>
+                                    <?php else : ?>
+                                        <?php echo esc_html($post->post_title); ?>
+                                    <?php endif; ?>
+                                </td>
+                                <td><?php echo esc_html($cat_label); ?></td>
+                                <td><?php echo esc_html(number_format_i18n($price, 2)); ?></td>
+                                <td><?php echo esc_html($status_label); ?></td>
+                                <td><?php echo $username; ?></td>
+                                <td>
+                                    <?php if ($author) : ?>
+                                        <a href="mailto:<?php echo esc_attr(antispambot($author->user_email)); ?>">
+                                            <?php echo esc_html(antispambot($author->user_email)); ?>
+                                        </a>
+                                    <?php else : ?>
+                                        —
+                                    <?php endif; ?>
+                                </td>
+                                <td><?php echo esc_html($role_label); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
         </div>
         <?php
     }

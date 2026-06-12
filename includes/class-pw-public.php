@@ -703,13 +703,25 @@ class PW_Public {
         return (string) ob_get_clean();
     }
 
-    public function render_search_form(): string {
+    public function render_search_form(array $atts = array()): string {
+        $atts = shortcode_atts(array('offer_type' => ''), $atts, 'pw_search_form');
+        $locked_offer_type = in_array($atts['offer_type'], array('verkauf', 'verleih'), true) ? $atts['offer_type'] : '';
+
         $keyword = isset($_GET['pw_keyword']) ? sanitize_text_field(wp_unslash($_GET['pw_keyword'])) : '';
-        $offer_type = isset($_GET['pw_offer_type']) ? sanitize_key(wp_unslash($_GET['pw_offer_type'])) : '';
-        if (!in_array($offer_type, array('', 'verkauf', 'verleih'), true)) {
-            $offer_type = '';
+
+        if ($locked_offer_type !== '') {
+            $offer_type = $locked_offer_type;
+        } else {
+            $offer_type = isset($_GET['pw_offer_type']) ? sanitize_key(wp_unslash($_GET['pw_offer_type'])) : '';
+            if (!in_array($offer_type, array('', 'verkauf', 'verleih'), true)) {
+                $offer_type = '';
+            }
         }
-        $show_borrowed = isset($_GET['pw_show_borrowed']) && $_GET['pw_show_borrowed'] === '1';
+
+        $show_borrowed = $locked_offer_type !== 'verkauf'
+            && isset($_GET['pw_show_borrowed'])
+            && $_GET['pw_show_borrowed'] === '1';
+
         $paged = max(1, (int) ($_GET['pw_page'] ?? 1));
         $settings = PW_Settings::get();
         $title_max_length = (int) ($settings['card_title_max_length'] ?? 40);
@@ -719,26 +731,34 @@ class PW_Public {
         ob_start();
         ?>
         <form method="get" class="pinnwand-search-form" id="pinnwand-search-form">
+            <?php if ($locked_offer_type !== '') : ?>
+                <input type="hidden" name="pw_offer_type" value="<?php echo esc_attr($locked_offer_type); ?>" />
+            <?php endif; ?>
+
             <p class="pinnwand-search-item pinnwand-search-item-keyword">
                 <label for="pw-keyword"><?php esc_html_e('Suche', 'pinnwand'); ?></label><br />
                 <input id="pw-keyword" type="text" name="pw_keyword" value="<?php echo esc_attr($keyword); ?>" placeholder="<?php echo esc_attr__('Suche nach Titel, Beschreibung und Keywords', 'pinnwand'); ?>" />
             </p>
 
-            <p class="pinnwand-search-item pinnwand-search-item-offer-type">
-                <label for="pw-offer-type"><?php esc_html_e('Inseratetyp', 'pinnwand'); ?></label><br />
-                <select id="pw-offer-type" name="pw_offer_type">
-                    <option value="" <?php selected($offer_type, ''); ?>><?php esc_html_e('Alle', 'pinnwand'); ?></option>
-                    <option value="verleih" <?php selected($offer_type, 'verleih'); ?>><?php esc_html_e('Zu verleihen', 'pinnwand'); ?></option>
-                    <option value="verkauf" <?php selected($offer_type, 'verkauf'); ?>><?php esc_html_e('Zu verkaufen', 'pinnwand'); ?></option>
-                </select>
-            </p>
+            <?php if ($locked_offer_type === '') : ?>
+                <p class="pinnwand-search-item pinnwand-search-item-offer-type">
+                    <label for="pw-offer-type"><?php esc_html_e('Inseratetyp', 'pinnwand'); ?></label><br />
+                    <select id="pw-offer-type" name="pw_offer_type">
+                        <option value="" <?php selected($offer_type, ''); ?>><?php esc_html_e('Alle', 'pinnwand'); ?></option>
+                        <option value="verleih" <?php selected($offer_type, 'verleih'); ?>><?php esc_html_e('Zu verleihen', 'pinnwand'); ?></option>
+                        <option value="verkauf" <?php selected($offer_type, 'verkauf'); ?>><?php esc_html_e('Zu verkaufen', 'pinnwand'); ?></option>
+                    </select>
+                </p>
+            <?php endif; ?>
 
-            <p class="pinnwand-search-item pinnwand-search-item-borrowed">
-                <label>
-                    <input type="checkbox" name="pw_show_borrowed" value="1" <?php checked($show_borrowed); ?> />
-                    <?php esc_html_e('Ausgeliehene anzeigen', 'pinnwand'); ?>
-                </label>
-            </p>
+            <?php if ($locked_offer_type !== 'verkauf') : ?>
+                <p class="pinnwand-search-item pinnwand-search-item-borrowed">
+                    <label>
+                        <input type="checkbox" name="pw_show_borrowed" value="1" <?php checked($show_borrowed); ?> />
+                        <?php esc_html_e('Ausgeliehene anzeigen', 'pinnwand'); ?>
+                    </label>
+                </p>
+            <?php endif; ?>
 
             <p class="pinnwand-search-item pinnwand-search-item-submit">
                 <button type="submit"><?php esc_html_e('Suchen', 'pinnwand'); ?></button>
