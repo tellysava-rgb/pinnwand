@@ -132,6 +132,7 @@ class PW_Article_Controller {
                     'action' => $action,
                 )
             );
+            return;
         }
 
         if ($redirect_url !== '') {
@@ -182,6 +183,7 @@ class PW_Article_Controller {
 
         if (wp_doing_ajax()) {
             wp_send_json_success(array('message' => __('Status aktualisiert.', 'pinnwand')));
+            return;
         }
 
         $target = $redirect_url !== '' ? add_query_arg('pw_action', 'status_changed', $redirect_url) : home_url('/');
@@ -189,7 +191,7 @@ class PW_Article_Controller {
     }
 
     public function delete_article(): void {
-        PW_Security::verify_nonce_or_die('pinnwand_delete_nonce', 'pinnwand_delete_article');
+        PW_Security::verify_nonce_or_die('pinnwand_delete_nonce', 'pinnwand_delete_article', 'request');
 
         if (!is_user_logged_in()) {
             $this->respond_error(__('Bitte anmelden.', 'pinnwand'), 401);
@@ -235,6 +237,7 @@ class PW_Article_Controller {
 
         if (wp_doing_ajax()) {
             wp_send_json_success(array('message' => __('Artikel geloescht.', 'pinnwand')));
+            return;
         }
 
         $target = $redirect_url !== '' ? add_query_arg('pw_action', 'article_deleted', $redirect_url) : home_url('/');
@@ -292,6 +295,7 @@ class PW_Article_Controller {
 
         if (wp_doing_ajax()) {
             wp_send_json_success(array('message' => __('Bild entfernt.', 'pinnwand')));
+            return;
         }
 
         $target = $redirect_url !== '' ? add_query_arg('pw_action', 'image_removed', $redirect_url) : home_url('/');
@@ -331,6 +335,7 @@ class PW_Article_Controller {
 
         if (wp_doing_ajax()) {
             wp_send_json_success(array('message' => __('Hauptbild gesetzt.', 'pinnwand')));
+            return;
         }
 
         $target = $redirect_url !== '' ? add_query_arg('pw_action', 'primary_image_set', $redirect_url) : home_url('/');
@@ -366,6 +371,7 @@ class PW_Article_Controller {
 
         if (wp_doing_ajax()) {
             wp_send_json_success(array('message' => __('Bild hochgeladen.', 'pinnwand')));
+            return;
         }
 
         $target = $redirect_url !== '' ? add_query_arg('pw_action', 'image_uploaded', $redirect_url) : home_url('/');
@@ -377,6 +383,7 @@ class PW_Article_Controller {
 
         if (wp_doing_ajax()) {
             wp_send_json_error(array('message' => $message), $status);
+            return;
         }
 
         $target = $redirect_url !== '' ? add_query_arg('error_message', rawurlencode($message), $redirect_url) : add_query_arg('error_message', rawurlencode($message), home_url('/'));

@@ -1,6 +1,6 @@
 <?php
 
-if (!defined('WP_UNINSTALL_PLUGIN')) {
+if (!defined('WP_UNINSTALL_PLUGIN') || !defined('ABSPATH')) {
     exit;
 }
 
@@ -55,6 +55,15 @@ foreach ($users as $user_id) {
     delete_user_meta((int) $user_id, 'pw_zip');
     delete_user_meta((int) $user_id, 'pw_city');
 }
+
+// Rate-Limiter-Locks entfernen
+global $wpdb;
+$wpdb->query(
+    $wpdb->prepare(
+        "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+        $wpdb->esc_like('pinnwand_create_lock_') . '%'
+    )
+);
 
 delete_option('pinnwand_version');
 delete_option('pinnwand_db_version');

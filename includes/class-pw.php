@@ -28,12 +28,10 @@ class PW {
         add_action('init', array($post_types, 'register_post_types'));
         add_action('init', array($post_types, 'register_taxonomies'));
 
-        $roles = new PW_User_Roles();
-        add_action('init', array($roles, 'register_roles'));
-
         $settings = new PW_Settings();
         add_action('admin_menu', array($settings, 'register_admin_menu'));
         add_action('admin_init', array($settings, 'register_settings'));
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
 
         $logger = new PW_Logger();
         add_action('admin_menu', array($logger, 'register_admin_menu'));
@@ -76,5 +74,33 @@ class PW {
 
     public function load_textdomain(): void {
         load_plugin_textdomain('pinnwand', false, dirname(plugin_basename(PINNWAND_PLUGIN_FILE)) . '/languages');
+    }
+
+    public function enqueue_admin_assets(string $hook): void {
+        if (strpos($hook, 'pinnwand') === false) {
+            return;
+        }
+
+        wp_enqueue_style(
+            'pinnwand-admin',
+            PINNWAND_PLUGIN_URL . 'admin/css/pinnwand-admin.css',
+            array(),
+            PINNWAND_VERSION
+        );
+        wp_enqueue_script(
+            'pinnwand-settings',
+            PINNWAND_PLUGIN_URL . 'admin/js/pinnwand-settings.js',
+            array(),
+            PINNWAND_VERSION,
+            true
+        );
+        wp_localize_script(
+            'pinnwand-settings',
+            'pinnwandSettingsL10n',
+            array(
+                'copied' => __('Kopiert', 'pinnwand'),
+                'copyLink' => __('Link kopieren', 'pinnwand'),
+            )
+        );
     }
 }

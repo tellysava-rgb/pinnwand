@@ -10,6 +10,7 @@ class PW_Profile_Controller {
 
         if (!is_user_logged_in()) {
             $this->redirect_with_error(__('Bitte anmelden.', 'pinnwand'));
+            return;
         }
 
         $user_id = get_current_user_id();
@@ -33,11 +34,13 @@ class PW_Profile_Controller {
         foreach ($required as $value) {
             if ($value === '') {
                 $this->redirect_with_error(__('Pflichtfelder fehlen.', 'pinnwand'));
+                return;
             }
         }
 
         if (!preg_match('/^\d{4,5}$/', $required['zip'])) {
             $this->redirect_with_error(__('PLZ muss 4 bis 5 Ziffern enthalten.', 'pinnwand'));
+            return;
         }
 
         $updated = wp_update_user(
@@ -49,6 +52,7 @@ class PW_Profile_Controller {
         );
         if (is_wp_error($updated)) {
             $this->redirect_with_error($updated->get_error_message());
+            return;
         }
 
         update_user_meta($user_id, 'pw_phone', $phone);
@@ -97,7 +101,13 @@ class PW_Profile_Controller {
 
         foreach ($posts as $post) {
             $categories = wp_get_post_terms($post->ID, 'pw_kategorie', array('fields' => 'names'));
+            if (is_wp_error($categories)) {
+                $categories = array();
+            }
             $tags = wp_get_post_terms($post->ID, 'pw_tag', array('fields' => 'names'));
+            if (is_wp_error($tags)) {
+                $tags = array();
+            }
 
             $rows[] = array('article', 'id', (string) $post->ID);
             $rows[] = array('article', 'title', $post->post_title);
@@ -110,7 +120,7 @@ class PW_Profile_Controller {
 
         nocache_headers();
         header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="pinnwand-export-' . $user_id . '.csv"');
+        header('Content-Disposition: attachment; filename="pinnwand-export-' . absint($user_id) . '.csv"');
 
         $output = fopen('php://output', 'w');
         if (!$output) {
@@ -134,6 +144,7 @@ class PW_Profile_Controller {
         $user_id = get_current_user_id();
         if (user_can($user_id, 'manage_options')) {
             $this->redirect_with_error(__('Administratoren koennen ihr Profil hier nicht loeschen.', 'pinnwand'));
+            return;
         }
 
         $posts = get_posts(

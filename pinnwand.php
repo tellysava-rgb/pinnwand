@@ -6,6 +6,7 @@
  * Author: Pinnwand Team
  * Text Domain: pinnwand
  * Domain Path: /languages
+ * Update URI: https://github.com/tellysava-rgb/pinnwand
  */
 
 if (!defined('ABSPATH')) {
@@ -17,7 +18,24 @@ define('PINNWAND_PLUGIN_FILE', __FILE__);
 define('PINNWAND_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('PINNWAND_PLUGIN_URL', plugin_dir_url(__FILE__));
 
+// GitHub-Repository-URL fuer automatische Updates (muss vor dem ersten Release gesetzt sein).
+define('PINNWAND_GITHUB_REPO', 'https://github.com/tellysava-rgb/pinnwand');
+
+require_once PINNWAND_PLUGIN_DIR . 'vendor/autoload.php';
 require_once PINNWAND_PLUGIN_DIR . 'includes/class-pw.php';
+
+// Automatische Updates von GitHub-Releases.
+add_action('init', static function (): void {
+    if (!class_exists('YahnisElsts\PluginUpdateChecker\v5\PucFactory')) {
+        return;
+    }
+    $update_checker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+        PINNWAND_GITHUB_REPO,
+        PINNWAND_PLUGIN_FILE,
+        'pinnwand'
+    );
+    $update_checker->getVcsApi()->enableReleaseAssets();
+});
 
 function pinnwand_activate(): void {
     require_once PINNWAND_PLUGIN_DIR . 'includes/class-pw-post-types.php';

@@ -72,15 +72,32 @@ class PW_Public {
 
     public function enqueue_assets(): void {
         $style_path = PINNWAND_PLUGIN_DIR . 'public/css/pinnwand-public.css';
-        if (!file_exists($style_path)) {
-            return;
+        if (file_exists($style_path)) {
+            wp_enqueue_style(
+                'pinnwand-public',
+                PINNWAND_PLUGIN_URL . 'public/css/pinnwand-public.css',
+                array(),
+                PINNWAND_VERSION
+            );
         }
 
-        wp_enqueue_style(
-            'pinnwand-public',
-            PINNWAND_PLUGIN_URL . 'public/css/pinnwand-public.css',
+        $gallery_script_path = PINNWAND_PLUGIN_DIR . 'public/js/pinnwand-gallery.js';
+        if (file_exists($gallery_script_path)) {
+            wp_enqueue_script(
+                'pinnwand-gallery',
+                PINNWAND_PLUGIN_URL . 'public/js/pinnwand-gallery.js',
+                array(),
+                PINNWAND_VERSION,
+                true
+            );
+        }
+
+        wp_register_script(
+            'pinnwand-search-form',
+            PINNWAND_PLUGIN_URL . 'public/js/pinnwand-search-form.js',
             array(),
-            PINNWAND_VERSION
+            PINNWAND_VERSION,
+            true
         );
     }
 
@@ -97,13 +114,17 @@ class PW_Public {
     }
 
     public function ajax_tag_suggestions(): void {
+        check_ajax_referer('pinnwand_tag_suggestions', 'nonce');
+
         if (!is_user_logged_in()) {
             wp_send_json_error(array('message' => __('Bitte anmelden.', 'pinnwand')), 401);
+            return;
         }
 
         $term = isset($_GET['term']) ? sanitize_text_field(wp_unslash($_GET['term'])) : '';
         if (mb_strlen($term) < 1) {
             wp_send_json_success(array('items' => array()));
+            return;
         }
 
         $tags = get_terms(
@@ -120,9 +141,11 @@ class PW_Public {
 
         if (is_wp_error($tags) || !is_array($tags)) {
             wp_send_json_success(array('items' => array()));
+            return;
         }
 
         wp_send_json_success(array('items' => array_values(array_map('strval', $tags))));
+        return;
     }
 
     public function render_registration_code_field(): void {
@@ -145,8 +168,7 @@ class PW_Public {
         }
     }
 
-    public function validate_registration_code(WP_Error $errors, string $sanitized_user_login, string $user_email): WP_Error {
-        unset($sanitized_user_login, $user_email);
+    public function validate_registration_code(WP_Error $errors, string $_sanitized_user_login, string $_user_email): WP_Error {
 
         $entered = isset($_POST['pinnwand_invitation_code']) ? strtoupper(trim(sanitize_text_field(wp_unslash((string) $_POST['pinnwand_invitation_code'])))) : '';
         $settings = PW_Settings::get();
@@ -174,8 +196,7 @@ class PW_Public {
         return $errors;
     }
 
-    public function handle_successful_registration(int $user_id): void {
-        unset($user_id);
+    public function handle_successful_registration(int $_user_id): void {
         $entered = isset($_POST['pinnwand_invitation_code']) ? strtoupper(trim(sanitize_text_field(wp_unslash((string) $_POST['pinnwand_invitation_code'])))) : '';
         if ($entered === '') {
             return;
@@ -300,73 +321,6 @@ class PW_Public {
         echo '</div>';
         echo '</section>';
 
-        ?>
-        <script>
-            (function () {
-                const mainImage = document.getElementById('pw-main-image');
-                const buttons = document.querySelectorAll('.pinnwand-thumb-btn');
-                const prevButton = document.getElementById('pw-detail-prev');
-                const nextButton = document.getElementById('pw-detail-next');
-                if (!mainImage || !buttons.length) {
-                    return;
-                }
-
-                function setActiveByIndex(index) {
-                    const count = buttons.length;
-                    if (count <= 0) {
-                        return;
-                    }
-                    const normalized = ((index % count) + count) % count;
-                    const active = buttons[normalized];
-                    const src = active.getAttribute('data-main-src');
-                    if (!src) {
-                        return;
-                    }
-                    mainImage.setAttribute('src', src);
-                    buttons.forEach(function (other) {
-                        other.classList.remove('is-active');
-                    });
-                    active.classList.add('is-active');
-                }
-
-                function getActiveIndex() {
-                    let activeIndex = 0;
-                    buttons.forEach(function (btn, idx) {
-                        if (btn.classList.contains('is-active')) {
-                            activeIndex = idx;
-                        }
-                    });
-                    return activeIndex;
-                }
-
-                buttons.forEach(function (btn, idx) {
-                    btn.addEventListener('click', function () {
-                        setActiveByIndex(idx);
-                    });
-                });
-
-                if (prevButton) {
-                    prevButton.addEventListener('click', function () {
-                        setActiveByIndex(getActiveIndex() - 1);
-                    });
-                }
-                if (nextButton) {
-                    nextButton.addEventListener('click', function () {
-                        setActiveByIndex(getActiveIndex() + 1);
-                    });
-                }
-
-                document.addEventListener('keydown', function (event) {
-                    if (event.key === 'ArrowLeft') {
-                        setActiveByIndex(getActiveIndex() - 1);
-                    } else if (event.key === 'ArrowRight') {
-                        setActiveByIndex(getActiveIndex() + 1);
-                    }
-                });
-            })();
-        </script>
-        <?php
-
         return (string) ob_get_clean();
     }
 
@@ -454,6 +408,27 @@ class PW_Public {
         $notice = $this->render_request_notice();
         $max_images = (int) $settings['max_images'];
         $existing_image_count = count($gallery_ids);
+
+        wp_enqueue_script(
+            'pinnwand-article-form',
+            PINNWAND_PLUGIN_URL . 'public/js/pinnwand-article-form.js',
+            array(),
+            PINNWAND_VERSION,
+            true
+        );
+        wp_localize_script(
+            'pinnwand-article-form',
+            'pinnwandFormL10n',
+            array(
+                'ajaxUrl'   => admin_url('admin-ajax.php'),
+                'ajaxNonce' => wp_create_nonce('pinnwand_tag_suggestions'),
+                'noImages'  => __('Keine neuen Bilder ausgewaehlt.', 'pinnwand'),
+                'oneImage'  => __('1 neues Bild ausgewaehlt.', 'pinnwand'),
+                'manyImages' => __('neue Bilder ausgewaehlt.', 'pinnwand'),
+                'remaining' => __('verbleibend:', 'pinnwand'),
+                'maxReached' => __('Maximale Bildanzahl erreicht. Bitte zuerst ein Bild entfernen.', 'pinnwand'),
+            )
+        );
 
         $edit_main_image_id = $primary_image_id > 0 ? $primary_image_id : (!empty($gallery_ids) ? (int) $gallery_ids[0] : 0);
         $edit_main_image_url = $edit_main_image_id > 0 ? wp_get_attachment_image_url($edit_main_image_id, 'large') : '';
@@ -635,259 +610,6 @@ class PW_Public {
                 </p>
             </form>
         </div>
-        <script>
-            (function () {
-                const hidden = document.getElementById('pinnwand-primary-image');
-                const tagInput = document.getElementById('pinnwand-tags');
-                const tagLiveBox = document.getElementById('pinnwand-tag-live-suggestions');
-                const tagSuggestUrl = '<?php echo esc_url(admin_url('admin-ajax.php')); ?>';
-                const uploadInput = document.getElementById('pinnwand-upload-images');
-                const selectedImagesInfo = document.getElementById('pinnwand-selected-images-info');
-
-                if (uploadInput && selectedImagesInfo) {
-                    const maxImages = parseInt(uploadInput.getAttribute('data-max-images') || '0', 10);
-                    const existingImages = parseInt(uploadInput.getAttribute('data-existing-images') || '0', 10);
-                    const remainingSlots = Math.max(0, maxImages - existingImages);
-                    let bufferedFiles = null;
-
-                    function fileKey(file) {
-                        return [file.name, file.size, file.lastModified].join('__');
-                    }
-
-                    function updateSelectedInfo() {
-                        const count = uploadInput.files ? uploadInput.files.length : 0;
-                        if (count <= 0) {
-                            selectedImagesInfo.textContent = '<?php echo esc_js(__('Keine neuen Bilder ausgewaehlt.', 'pinnwand')); ?>';
-                            return;
-                        }
-
-                        const remainingAfterSelection = Math.max(0, remainingSlots - count);
-                        selectedImagesInfo.textContent = count === 1
-                            ? '<?php echo esc_js(__('1 neues Bild ausgewaehlt.', 'pinnwand')); ?> ' + '(<?php echo esc_js(__('verbleibend:', 'pinnwand')); ?> ' + remainingAfterSelection + ')'
-                            : count + ' <?php echo esc_js(__('neue Bilder ausgewaehlt.', 'pinnwand')); ?> ' + '(<?php echo esc_js(__('verbleibend:', 'pinnwand')); ?> ' + remainingAfterSelection + ')';
-                    }
-
-                    if (remainingSlots <= 0) {
-                        uploadInput.disabled = true;
-                        selectedImagesInfo.textContent = '<?php echo esc_js(__('Maximale Bildanzahl erreicht. Bitte zuerst ein Bild entfernen.', 'pinnwand')); ?>';
-                    }
-
-                    uploadInput.addEventListener('change', function () {
-                        const selected = uploadInput.files ? Array.from(uploadInput.files) : [];
-                        if (!selected.length) {
-                            updateSelectedInfo();
-                            return;
-                        }
-
-                        if (typeof DataTransfer === 'undefined') {
-                            updateSelectedInfo();
-                            return;
-                        }
-
-                        if (!bufferedFiles) {
-                            bufferedFiles = new DataTransfer();
-                        }
-
-                        const seen = new Set(Array.from(bufferedFiles.files).map(fileKey));
-                        selected.forEach(function (file) {
-                            if (bufferedFiles.files.length >= remainingSlots) {
-                                return;
-                            }
-                            const key = fileKey(file);
-                            if (seen.has(key)) {
-                                return;
-                            }
-                            bufferedFiles.items.add(file);
-                            seen.add(key);
-                        });
-
-                        uploadInput.files = bufferedFiles.files;
-                        updateSelectedInfo();
-                    });
-                }
-
-                const editMainImage = document.getElementById('pw-edit-main-image');
-                const editThumbButtons = document.querySelectorAll('.pinnwand-edit-thumb-btn');
-                const editPrevButton = document.getElementById('pw-edit-prev');
-                const editNextButton = document.getElementById('pw-edit-next');
-                function setEditActiveByIndex(index) {
-                    const count = editThumbButtons.length;
-                    if (!editMainImage || count <= 0) {
-                        return;
-                    }
-                    const normalized = ((index % count) + count) % count;
-                    const btn = editThumbButtons[normalized];
-                    const newMainSrc = btn.getAttribute('data-main-src') || '';
-                    const newThumbSrc = btn.getAttribute('data-thumb-src') || '';
-                    const newAttachmentId = btn.getAttribute('data-attachment-id') || '';
-                    if (!newMainSrc || !newAttachmentId) {
-                        return;
-                    }
-
-                    editMainImage.setAttribute('src', newMainSrc);
-                    editMainImage.setAttribute('data-main-src', newMainSrc);
-                    editMainImage.setAttribute('data-thumb-src', newThumbSrc);
-                    editMainImage.setAttribute('data-attachment-id', newAttachmentId);
-
-                    editThumbButtons.forEach(function (other) {
-                        other.classList.remove('is-active');
-                    });
-                    btn.classList.add('is-active');
-
-                    if (hidden) {
-                        hidden.value = newAttachmentId;
-                    }
-                }
-                function getEditActiveIndex() {
-                    let activeIndex = 0;
-                    editThumbButtons.forEach(function (btn, idx) {
-                        if (btn.classList.contains('is-active')) {
-                            activeIndex = idx;
-                        }
-                    });
-                    return activeIndex;
-                }
-                editThumbButtons.forEach(function (btn) {
-                    btn.addEventListener('click', function () {
-                        const index = Array.prototype.indexOf.call(editThumbButtons, btn);
-                        setEditActiveByIndex(index);
-                    });
-                });
-                if (editPrevButton) {
-                    editPrevButton.addEventListener('click', function () {
-                        setEditActiveByIndex(getEditActiveIndex() - 1);
-                    });
-                }
-                if (editNextButton) {
-                    editNextButton.addEventListener('click', function () {
-                        setEditActiveByIndex(getEditActiveIndex() + 1);
-                    });
-                }
-                if (editThumbButtons.length > 1) {
-                    document.addEventListener('keydown', function (event) {
-                        if (event.key === 'ArrowLeft') {
-                            setEditActiveByIndex(getEditActiveIndex() - 1);
-                        } else if (event.key === 'ArrowRight') {
-                            setEditActiveByIndex(getEditActiveIndex() + 1);
-                        }
-                    });
-                }
-
-                if (!tagInput || !tagLiveBox) {
-                    return;
-                }
-
-                let tagSuggestTimer = null;
-
-                function getTagParts() {
-                    return tagInput.value
-                        .split(',')
-                        .map(function (item) { return item.trim(); })
-                        .filter(function (item) { return item.length > 0; });
-                }
-
-                function getCurrentToken() {
-                    const raw = tagInput.value;
-                    const lastComma = raw.lastIndexOf(',');
-                    return (lastComma >= 0 ? raw.slice(lastComma + 1) : raw).trim();
-                }
-
-                function applySuggestion(tagValue) {
-                    const raw = tagInput.value;
-                    const lastComma = raw.lastIndexOf(',');
-                    const baseRaw = lastComma >= 0 ? raw.slice(0, lastComma) : '';
-                    const baseParts = baseRaw
-                        .split(',')
-                        .map(function (item) { return item.trim(); })
-                        .filter(function (item) { return item.length > 0; });
-
-                    const normalized = tagValue.toLowerCase();
-                    const exists = baseParts.some(function (item) {
-                        return item.toLowerCase() === normalized;
-                    });
-                    if (!exists) {
-                        baseParts.push(tagValue);
-                    }
-
-                    tagInput.value = baseParts.join(', ') + ', ';
-                    tagLiveBox.innerHTML = '';
-                    tagLiveBox.hidden = true;
-                    tagInput.focus();
-                }
-
-                function renderLiveSuggestions(items) {
-                    if (!Array.isArray(items) || !items.length) {
-                        tagLiveBox.innerHTML = '';
-                        tagLiveBox.hidden = true;
-                        return;
-                    }
-
-                    const selected = getTagParts().map(function (item) { return item.toLowerCase(); });
-                    const filtered = items.filter(function (item) {
-                        return selected.indexOf(String(item).toLowerCase()) === -1;
-                    });
-                    if (!filtered.length) {
-                        tagLiveBox.innerHTML = '';
-                        tagLiveBox.hidden = true;
-                        return;
-                    }
-
-                    tagLiveBox.innerHTML = '';
-                    filtered.forEach(function (item) {
-                        const btn = document.createElement('button');
-                        btn.type = 'button';
-                        btn.className = 'pinnwand-tag-live-item';
-                        btn.textContent = String(item);
-                        btn.addEventListener('mousedown', function (event) {
-                            event.preventDefault();
-                            applySuggestion(String(item));
-                        });
-                        tagLiveBox.appendChild(btn);
-                    });
-                    tagLiveBox.hidden = false;
-                }
-
-                async function requestTagSuggestions(token) {
-                    try {
-                        const url = tagSuggestUrl + '?action=pinnwand_tag_suggestions&term=' + encodeURIComponent(token);
-                        const response = await fetch(url, { credentials: 'same-origin' });
-                        if (!response.ok) {
-                            renderLiveSuggestions([]);
-                            return;
-                        }
-                        const data = await response.json();
-                        const items = data && data.success && data.data && Array.isArray(data.data.items) ? data.data.items : [];
-                        renderLiveSuggestions(items);
-                    } catch (e) {
-                        renderLiveSuggestions([]);
-                    }
-                }
-
-                tagInput.addEventListener('input', function () {
-                    const token = getCurrentToken();
-                    if (token.length < 2) {
-                        renderLiveSuggestions([]);
-                        return;
-                    }
-                    if (tagSuggestTimer) {
-                        window.clearTimeout(tagSuggestTimer);
-                    }
-                    tagSuggestTimer = window.setTimeout(function () {
-                        requestTagSuggestions(token);
-                    }, 140);
-                });
-
-                tagInput.addEventListener('blur', function () {
-                    window.setTimeout(function () {
-                        tagLiveBox.hidden = true;
-                    }, 120);
-                });
-
-                tagLiveBox.addEventListener('mousedown', function (event) {
-                    event.preventDefault();
-                });
-            })();
-        </script>
         <?php
 
         return (string) ob_get_clean();
@@ -1101,31 +823,8 @@ class PW_Public {
                 <?php endif; ?>
             <?php endif; ?>
         </div>
-        <script>
-            (function () {
-                const form = document.getElementById('pinnwand-search-form');
-                const input = document.getElementById('pw-keyword');
-                if (!form || !input) {
-                    return;
-                }
-                input.addEventListener('keydown', function (event) {
-                    if (event.key === 'Enter') {
-                        event.preventDefault();
-                        form.submit();
-                    }
-                });
-
-                const keywordButtons = document.querySelectorAll('.pinnwand-keyword-link');
-                keywordButtons.forEach(function (button) {
-                    button.addEventListener('click', function () {
-                        const keyword = button.getAttribute('data-tag') || '';
-                        input.value = keyword;
-                        form.submit();
-                    });
-                });
-            })();
-        </script>
         <?php
+        wp_enqueue_script('pinnwand-search-form');
         wp_reset_postdata();
 
         return (string) ob_get_clean();

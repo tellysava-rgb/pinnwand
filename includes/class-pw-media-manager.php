@@ -332,14 +332,7 @@ class PW_Media_Manager {
 
     private function build_upload_error_message(int $error): string {
         if ($error === UPLOAD_ERR_INI_SIZE || $error === UPLOAD_ERR_FORM_SIZE) {
-            $ini_limit = (string) ini_get('upload_max_filesize');
-            $post_limit = (string) ini_get('post_max_size');
-            return sprintf(
-                /* translators: 1 upload_max_filesize, 2 post_max_size */
-                __('Upload abgelehnt: Datei zu gross (Serverlimit). upload_max_filesize=%1$s, post_max_size=%2$s.', 'pinnwand'),
-                $ini_limit,
-                $post_limit
-            );
+            return __('Upload abgelehnt: Datei zu gross. Bitte eine kleinere Datei waehlen.', 'pinnwand');
         }
 
         if ($error === UPLOAD_ERR_PARTIAL) {

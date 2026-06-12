@@ -1,0 +1,35 @@
+# Dev-only vendor packages (nicht im Repo, nicht im Release-Zip)
+/vendor/phpunit/
+/vendor/sebastian/
+/vendor/yoast/
+/vendor/nikic/
+/vendor/myclabs/
+/vendor/phar-io/
+/vendor/theseer/
+/vendor/doctrine/
+/vendor/bin/
+/node_modules/
+package-lock.json
+
+# IDE and Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+.env
+.env.local
+
+# Build and dist
+/dist/
+/build/
+
+# Logs
+*.log
+
+# Markdown files
+*.md

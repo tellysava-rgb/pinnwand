@@ -5,11 +5,19 @@ if (!defined('ABSPATH')) {
 }
 
 class PW_Security {
-    public static function verify_nonce_or_die(string $nonce_field, string $action): void {
-        $nonce = isset($_REQUEST[$nonce_field]) ? sanitize_text_field(wp_unslash($_REQUEST[$nonce_field])) : '';
+    public static function verify_nonce_or_die(string $nonce_field, string $action, string $source = 'post'): void {
+        $nonce_container = $_POST;
+        if ($source === 'request') {
+            $nonce_container = $_REQUEST;
+        } elseif ($source === 'get') {
+            $nonce_container = $_GET;
+        }
+
+        $nonce = isset($nonce_container[$nonce_field]) ? sanitize_text_field(wp_unslash($nonce_container[$nonce_field])) : '';
         if (empty($nonce) || !wp_verify_nonce($nonce, $action)) {
             if (wp_doing_ajax()) {
                 wp_send_json_error(array('message' => __('Sicherheitspruefung fehlgeschlagen.', 'pinnwand')), 403);
+                return;
             }
 
             wp_die(__('Sicherheitspruefung fehlgeschlagen.', 'pinnwand'), __('Fehler', 'pinnwand'), array('response' => 403));
