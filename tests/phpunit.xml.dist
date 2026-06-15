@@ -1,8 +1,0 @@
-<?xml version="1.0"?>
-<phpunit bootstrap="bootstrap.php" colors="true" verbose="true">
-  <testsuites>
-    <testsuite name="Pinnwand Tests">
-      <directory>./</directory>
-    </testsuite>
-  </testsuites>
-</phpunit>
