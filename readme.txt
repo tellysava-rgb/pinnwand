@@ -3,30 +3,37 @@ Contributors: tellysava-rgb
 Tags: pinnwand, inserate, verleih, verkauf, community
 Requires at least: 6.3
 Tested up to: 7.0
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Eine digitale Pinnwand fuer Gemeinschaften zum Verleihen und Verkaufen von Artikeln.
+Digitale Pinnwand fuer Haeuser und Quartiere — Artikel verleihen oder verkaufen, nur fuer eingeloggte Mitglieder.
 
 == Description ==
 
-Pinnwand ist ein WordPress-Plugin fuer geschlossene Gemeinschaften. Mitglieder koennen Artikel zum Verleihen oder Verkaufen inserieren. Die Registrierung ist per Einladungscode geschuetzt.
+**Pinnwand** verwandelt jede WordPress-Seite in eine digitale Schwarzwand fuer eine geschlossene Gemeinschaft — ideal fuer ein Wohnhaus, eine Siedlung oder ein Quartier. Mitglieder koennen Artikel inserieren, die sie verleihen oder verkaufen moechten. Die Kontaktangaben der Inserenten sind nur fuer eingeloggte Benutzer sichtbar.
 
-**Funktionen:**
+**Inseratetypen**
 
-* Inserate erstellen, bearbeiten und loeschen (Verleih & Verkauf)
-* Bilder pro Inserat hochladen (konfigurierbar)
-* Suchmaske mit Filter nach Inseratetyp und Status
-* Dedizierte Seiten fuer Verleih- oder Verkaufsinserate moeglich
-* Benutzer-Dashboard mit eigenen Inseraten
+Jeder Inseratetyp (z.B. Verleih, Verkauf, Verschenken) kann individuell konfiguriert werden. Pro Typ laesst sich festlegen, ob ein Verleih-Status ("Verfuegbar" / "Ausgeliehen") angezeigt werden soll. Fuer jeden Inseratetyp kann eine eigene WordPress-Seite erstellt werden oder alle Typen gemeinsam auf einer Seite erscheinen.
+
+**Kategorien und Keywords**
+
+Inserate koennen mit eigenen Kategorien und Keywords versehen werden. Die Suchmaske erlaubt das Filtern nach Kategorie, Inseratetyp und Suchbegriff. Kategorien und Keywords sind als anklickbare Chips direkt auf der Pinnwand sichtbar.
+
+**Datenschutz und Zugriffsschutz**
+
+Die Kontaktangaben (Name, E-Mail, Telefon, Adresse) eines Inserenten sind ausschliesslich fuer eingeloggte Mitglieder einsehbar. Die Registrierung ist durch einen Einladungscode geschuetzt — nur Personen mit dem Code koennen sich anmelden.
+
+**Weitere Funktionen**
+
+* Bilder pro Inserat hochladen (Anzahl und Groesse konfigurierbar)
+* Benutzer-Dashboard mit eigenen Inseraten (bearbeiten, loeschen, sperren)
 * Profilverwaltung mit Datenexport (CSV) und Kontoloesch-Funktion
-* Registrierung per Einladungscode mit optionalem Ablaufdatum
-* Optionaler CAPTCHA-Schutz (Cloudflare Turnstile) bei Registrierung
 * Admin-Uebersicht aller Inserate mit Benutzerinformationen
-* Automatische Updates ueber GitHub-Releases
-* Rate-Limiting gegen Missbrauch bei der Inseratserstellung
+* Optionaler CAPTCHA-Schutz (Cloudflare Turnstile) bei Registrierung
+* Automatische Plugin-Updates ueber GitHub-Releases
 
 == Installation ==
 
@@ -80,6 +87,9 @@ Standardmaessig JPG, PNG und WebP. Die erlaubten Formate sowie Groessenlimits ko
 6. Admin-Uebersicht aller Inserate
 
 == Changelog ==
+
+= 1.0.1 =
+* Aktualisierte Plugin-Beschreibung mit vollstaendiger Funktionsuebersicht
 
 = 1.0.0 =
 * Erster stabiler Release
