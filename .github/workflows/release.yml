@@ -27,13 +27,17 @@ jobs:
       - name: Build plugin zip
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          mkdir -p /tmp/release
-          zip -r "/tmp/release/pinnwand-${VERSION}.zip" . \
-            --exclude "./.github/*" \
-            --exclude "./tests/*" \
-            --exclude "./composer.json" \
-            --exclude "./composer.lock" \
-            --exclude "./.gitignore"
+          mkdir -p /tmp/release/pinnwand
+          rsync -a \
+            --exclude='.github' \
+            --exclude='tests' \
+            --exclude='composer.json' \
+            --exclude='composer.lock' \
+            --exclude='.gitignore' \
+            --exclude='.git' \
+            . /tmp/release/pinnwand/
+          cd /tmp/release
+          zip -r "pinnwand-${VERSION}.zip" pinnwand/
           echo "PLUGIN_ZIP=/tmp/release/pinnwand-${VERSION}.zip" >> "$GITHUB_ENV"
           echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
 
