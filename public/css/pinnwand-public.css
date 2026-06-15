@@ -181,28 +181,77 @@
 
 .pinnwand-dashboard-table th,
 .pinnwand-dashboard-table td {
-  border-bottom: 1px solid #e4e7ec;
-  padding: 10px;
+  vertical-align: middle;
   text-align: left;
-  vertical-align: top;
 }
 
-.pinnwand-form-wrap label,
-.pinnwand-profile-wrap label,
-.pinnwand-results label,
+.pinnwand-dashboard-table .pw-col-actions {
+  text-align: right;
+}
+
+.pw-row-inactive {
+  opacity: .55;
+}
+
+.pw-badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 10px;
+  font-size: .8rem;
+  font-weight: 600;
+}
+
+.pw-badge-available   { background: #d4edda; color: #1e7e34; }
+.pw-badge-borrowed    { background: #fff3cd; color: #856404; }
+.pw-badge-unavailable { background: #e9ecef; color: #495057; }
+
+.pinnwand-wrap .pinnwand-dashboard-table .pw-col-actions {
+  text-align: right;
+  min-width: 140px;
+  white-space: nowrap;
+}
+
+.pw-actions {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: nowrap !important;
+  white-space: nowrap;
+}
+
+/* !important nötig: Theme-Regeln wie .entry-content a { display: block } können
+   auch foster-parentete Elemente ausserhalb des Tabellen-Kontexts treffen. */
+a.pw-icon-btn {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  text-decoration: none !important;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  color: inherit;
+  line-height: 1;
+}
+
+a.pw-icon-btn .dashicons {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+
 .pinnwand-form-wrap input,
 .pinnwand-form-wrap textarea,
 .pinnwand-form-wrap select,
 .pinnwand-profile-wrap input,
 .pinnwand-profile-wrap textarea,
 .pinnwand-profile-wrap select,
-.pinnwand-results input,
-.pinnwand-results select,
-.pinnwand-results textarea,
-.pinnwand-results button {
+.pinnwand-search-form input,
+.pinnwand-search-form select {
   font-family: inherit;
-  font-size: 1rem;
-  line-height: 1.4;
 }
 
 .pinnwand-article-form input[type="text"],
@@ -213,6 +262,33 @@
 .pinnwand-search-form input[type="text"] {
   width: 100%;
   max-width: 520px;
+}
+
+.pinnwand-article-form .pinnwand-form-field {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 8px 12px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.pinnwand-article-form .pinnwand-form-field-textarea {
+  align-items: start;
+}
+
+.pinnwand-article-form .pinnwand-form-field label {
+  margin: 0;
+  font-weight: 600;
+}
+
+.pinnwand-article-form .pinnwand-form-field input[type="text"],
+.pinnwand-article-form .pinnwand-form-field input[type="number"],
+.pinnwand-article-form .pinnwand-form-field textarea,
+.pinnwand-article-form .pinnwand-form-field select,
+.pinnwand-article-form .pinnwand-form-field .pinnwand-tag-input-wrap {
+  width: 100%;
+  max-width: none;
+  margin: 0;
 }
 
 .pinnwand-search-form input[type="text"] {
@@ -287,9 +363,9 @@
 
 .pinnwand-search-form {
   display: grid;
-  grid-template-columns: minmax(280px, 40%) 220px auto auto;
-  grid-template-areas: "keyword offer borrowed submit";
-  align-items: end;
+  grid-template-columns: 2fr 1fr 1fr auto auto;
+  grid-template-areas: "keyword category offer borrowed submit";
+  align-items: center;
   gap: 12px 14px;
   width: 100%;
   margin-bottom: 12px;
@@ -302,48 +378,56 @@
 .pinnwand-search-item {
   margin: 0;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
   min-width: 0;
 }
 
 .pinnwand-search-item-keyword {
   grid-area: keyword;
-  min-width: 0;
 }
 
-.pinnwand-search-item-borrowed {
-  grid-area: borrowed;
-  display: flex;
-  align-items: center;
-  min-height: 44px;
-  padding-bottom: 2px;
-  white-space: nowrap;
-}
-
-.pinnwand-search-item-offer-type select {
-  min-height: 44px;
+.pinnwand-search-item-category {
+  grid-area: category;
 }
 
 .pinnwand-search-item-offer-type {
   grid-area: offer;
-  width: 220px;
-  min-width: 220px;
 }
 
-.pinnwand-search-item-offer-type select {
-  width: 100%;
+.pinnwand-search-item-borrowed {
+  grid-area: borrowed;
+  white-space: nowrap;
 }
 
 .pinnwand-search-item-submit {
   grid-area: submit;
-  align-self: end;
+}
+
+.pinnwand-search-form label {
+  white-space: nowrap;
+  font-weight: 600;
+  margin: 0;
+}
+
+.pinnwand-search-item-keyword input[type="text"] {
+  flex: 1;
+  min-width: 0;
+}
+
+.pinnwand-search-item-keyword input[type="text"],
+.pinnwand-search-item-category select,
+.pinnwand-search-item-offer-type select,
+.pinnwand-search-item-submit button {
+  min-height: 38px;
+  box-sizing: border-box;
 }
 
 .pinnwand-search-item-borrowed label {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 0;
 }
 
 .pinnwand-search-item-borrowed input[type="checkbox"] {
@@ -352,25 +436,7 @@
 }
 
 .pinnwand-search-item-submit button {
-  min-height: 44px;
-  padding: 0 18px;
-  font-size: 1rem;
-  line-height: 1;
-}
-
-.pinnwand-search-form input[type="text"],
-.pinnwand-search-form select {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  font-size: 1rem;
-  line-height: 1.4;
-}
-
-.pinnwand-search-form label {
-  display: block;
-  margin-bottom: 4px;
-  font-weight: 600;
+  cursor: pointer;
 }
 
 .pinnwand-required {
@@ -380,28 +446,16 @@
 
 @media (max-width: 1180px) {
   .pinnwand-search-form {
-    grid-template-columns: 220px auto;
+    grid-template-columns: 1fr auto auto;
     grid-template-areas:
-      "keyword keyword"
-      "offer borrowed"
-      "submit submit";
-  }
-
-  .pinnwand-search-item-offer-type {
-    width: 220px;
-    min-width: 220px;
-  }
-
-  .pinnwand-search-item-submit {
-    justify-self: start;
+      "keyword keyword keyword"
+      "category offer borrowed"
+      "submit submit submit";
   }
 }
 
 .pinnwand-article-form button[type="submit"] {
-  min-height: 44px;
-  padding: 0 16px;
-  font-size: 1rem;
-  line-height: 1;
+  cursor: pointer;
 }
 
 .pinnwand-card-title {
@@ -452,7 +506,8 @@
   background: #f8f9fb;
 }
 
-.pinnwand-keyword-link {
+.pinnwand-keyword-link,
+.pinnwand-category-link {
   border: 1px solid #d0d5dd;
   border-radius: 999px;
   background: #fff;
@@ -464,7 +519,8 @@
   margin: 2px 4px 2px 0;
 }
 
-.pinnwand-keyword-link:hover {
+.pinnwand-keyword-link:hover,
+.pinnwand-category-link:hover {
   background: #f8f9fb;
 }
 
@@ -554,48 +610,15 @@
   pointer-events: none;
 }
 
-.pinnwand-remove-icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border: 1px solid #d0d5dd;
-  border-radius: 8px;
-  background: #fff;
-  color: #475467;
-  cursor: pointer;
-}
-
-.pinnwand-remove-icon-btn:hover {
-  background: #fef3f2;
-  border-color: #fecdca;
-  color: #b42318;
-}
-
+.pinnwand-remove-icon-btn,
 .pinnwand-primary-icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 34px;
   height: 34px;
-  border: 1px solid #d0d5dd;
-  border-radius: 8px;
-  background: #fff;
-  color: #475467;
+  padding: 0;
   cursor: pointer;
-}
-
-.pinnwand-primary-icon-btn:hover {
-  background: #f8f9fb;
-  border-color: #d0d5dd;
-  color: #344054;
-}
-
-.pinnwand-primary-icon-btn.is-active {
-  background: #f8f9fb;
-  border-color: #d0d5dd;
-  color: #344054;
 }
 
 .pinnwand-edit-image-grid {
@@ -683,10 +706,16 @@
     grid-template-columns: 1fr;
     grid-template-areas:
       "keyword"
+      "category"
       "offer"
       "borrowed"
       "submit";
-    align-items: end;
+  }
+
+  .pinnwand-search-item-keyword input[type="text"],
+  .pinnwand-search-item-category select,
+  .pinnwand-search-item-offer-type select {
+    flex: 1;
   }
 
   .pinnwand-search-item-borrowed {

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Pinnwand
  * Description: Eine digitale Pinnwand fuer das Verleihen und Finden von Artikeln.
- * Version: 0.4.0
+ * Version: 1.0.0
  * Author: Pinnwand Team
  * Text Domain: pinnwand
  * Domain Path: /languages
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('PINNWAND_VERSION', '0.4.0');
+define('PINNWAND_VERSION', '1.0.0');
 define('PINNWAND_PLUGIN_FILE', __FILE__);
 define('PINNWAND_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('PINNWAND_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -52,6 +52,7 @@ function pinnwand_activate(): void {
     add_option('pinnwand_version', PINNWAND_VERSION);
     add_option('pinnwand_db_version', PINNWAND_VERSION);
     add_option('pinnwand_settings', PW_Settings::get_defaults());
+    add_option('pinnwand_offer_types', PW_Settings::get_default_offer_types());
     add_option('pinnwand_error_log', array());
 
     flush_rewrite_rules();

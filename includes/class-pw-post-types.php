@@ -20,7 +20,7 @@ class PW_Post_Types {
             'labels' => $labels,
             'public' => true,
             'show_ui' => true,
-            'show_in_menu' => true,
+            'show_in_menu' => 'pinnwand-all-articles',
             'has_archive' => true,
             'rewrite' => array('slug' => 'artikel'),
             'supports' => array('title', 'editor', 'author', 'thumbnail'),

@@ -31,6 +31,9 @@ class PW {
         $settings = new PW_Settings();
         add_action('admin_menu', array($settings, 'register_admin_menu'));
         add_action('admin_init', array($settings, 'register_settings'));
+        add_action('admin_post_pinnwand_add_offer_type', array($settings, 'handle_add_offer_type'));
+        add_action('admin_post_pinnwand_update_offer_type', array($settings, 'handle_update_offer_type'));
+        add_action('admin_post_pinnwand_delete_offer_type', array($settings, 'handle_delete_offer_type'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
 
         $logger = new PW_Logger();
@@ -49,6 +52,8 @@ class PW {
         add_action('wp_ajax_pinnwand_set_primary_image', array($articles, 'set_primary_image'));
         add_action('admin_post_pinnwand_change_status', array($articles, 'change_article_status'));
         add_action('wp_ajax_pinnwand_change_status', array($articles, 'change_article_status'));
+        add_action('admin_post_pinnwand_toggle_visibility', array($articles, 'toggle_article_visibility'));
+        add_action('wp_ajax_pinnwand_toggle_visibility', array($articles, 'toggle_article_visibility'));
 
         $profile = new PW_Profile_Controller();
         add_action('admin_post_pinnwand_save_profile', array($profile, 'save_profile'));

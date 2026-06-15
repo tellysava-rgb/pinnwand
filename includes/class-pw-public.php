@@ -71,12 +71,14 @@ class PW_Public {
     }
 
     public function enqueue_assets(): void {
+        wp_enqueue_style('dashicons');
+
         $style_path = PINNWAND_PLUGIN_DIR . 'public/css/pinnwand-public.css';
         if (file_exists($style_path)) {
             wp_enqueue_style(
                 'pinnwand-public',
                 PINNWAND_PLUGIN_URL . 'public/css/pinnwand-public.css',
-                array(),
+                array('dashicons'),
                 PINNWAND_VERSION
             );
         }
@@ -270,7 +272,9 @@ class PW_Public {
         echo '<div class="pinnwand-detail-description">' . wp_kses_post($content) . '</div>';
         echo '<ul class="pinnwand-meta-list">';
         echo '<li><strong>' . esc_html__('Inseratetyp:', 'pinnwand') . '</strong> ' . esc_html($this->translate_offer_type($offer_type)) . '</li>';
-        echo '<li><strong>' . esc_html__('Status:', 'pinnwand') . '</strong> ' . esc_html($this->translate_status($status)) . '</li>';
+        if (PW_Settings::is_verleih_type($offer_type)) {
+            echo '<li><strong>' . esc_html__('Verleih:', 'pinnwand') . '</strong> ' . esc_html($this->translate_status($status)) . '</li>';
+        }
         echo '<li><strong>' . esc_html__('Kategorie:', 'pinnwand') . '</strong> ' . esc_html(!empty($categories) ? implode(', ', $categories) : '-') . '</li>';
         echo '<li><strong>' . esc_html__('Keywords:', 'pinnwand') . '</strong> ' . esc_html(!empty($tags) ? implode(', ', $tags) : '-') . '</li>';
         echo '<li><strong>' . esc_html__('Preis / Gebuehr:', 'pinnwand') . '</strong> ' . esc_html(number_format_i18n($price, 2)) . '</li>';
@@ -362,9 +366,12 @@ class PW_Public {
         if ($status === '') {
             $status = 'available';
         }
-        $offer_type = $post ? (string) get_post_meta($post->ID, 'pw_offer_type', true) : 'verleih';
-        if (!in_array($offer_type, array('verkauf', 'verleih'), true)) {
-            $offer_type = 'verleih';
+        $offer_types     = PW_Settings::get_offer_types();
+        $offer_type_keys = array_column($offer_types, 'key');
+        $default_type    = !empty($offer_type_keys) ? $offer_type_keys[0] : 'verleih';
+        $offer_type      = $post ? (string) get_post_meta($post->ID, 'pw_offer_type', true) : $default_type;
+        if (!in_array($offer_type, $offer_type_keys, true)) {
+            $offer_type = $default_type;
         }
         $price = $post ? (float) get_post_meta($post->ID, 'pw_price', true) : 0.0;
 
@@ -451,26 +458,27 @@ class PW_Public {
 
                 <div class="pinnwand-edit-layout">
                     <div class="pinnwand-edit-left">
-                        <p>
-                            <label for="pinnwand-title"><?php esc_html_e('Titel', 'pinnwand'); ?> <span class="pinnwand-required">*</span></label><br />
-                            <input id="pinnwand-title" type="text" name="title" required value="<?php echo esc_attr($title); ?>" />
-                        </p>
-
-                        <p>
-                            <label for="pinnwand-description"><?php esc_html_e('Beschreibung', 'pinnwand'); ?> <span class="pinnwand-required">*</span></label><br />
-                            <textarea id="pinnwand-description" name="description" rows="6" required><?php echo esc_textarea($description); ?></textarea>
-                        </p>
-
-                        <p>
-                            <label for="pinnwand-offer-type"><?php esc_html_e('Inseratetyp', 'pinnwand'); ?> <span class="pinnwand-required">*</span></label><br />
+                        <p class="pinnwand-form-field">
+                            <label for="pinnwand-offer-type"><?php esc_html_e('Inseratetyp', 'pinnwand'); ?> <span class="pinnwand-required">*</span></label>
                             <select id="pinnwand-offer-type" name="offer_type" required>
-                                <option value="verleih" <?php selected($offer_type, 'verleih'); ?>><?php esc_html_e('Zu verleihen', 'pinnwand'); ?></option>
-                                <option value="verkauf" <?php selected($offer_type, 'verkauf'); ?>><?php esc_html_e('Zu verkaufen', 'pinnwand'); ?></option>
+                                <?php foreach ($offer_types as $ot) : ?>
+                                    <option value="<?php echo esc_attr($ot['key']); ?>" <?php selected($offer_type, $ot['key']); ?> data-verleih="<?php echo !empty($ot['verleih_moeglich']) ? '1' : '0'; ?>"><?php echo esc_html($ot['label']); ?></option>
+                                <?php endforeach; ?>
                             </select>
                         </p>
 
-                        <p>
-                            <label for="pinnwand-category"><?php esc_html_e('Kategorie', 'pinnwand'); ?> <span class="pinnwand-required">*</span></label><br />
+                        <p class="pinnwand-form-field">
+                            <label for="pinnwand-title"><?php esc_html_e('Titel', 'pinnwand'); ?> <span class="pinnwand-required">*</span></label>
+                            <input id="pinnwand-title" type="text" name="title" required value="<?php echo esc_attr($title); ?>" />
+                        </p>
+
+                        <p class="pinnwand-form-field pinnwand-form-field-textarea">
+                            <label for="pinnwand-description"><?php esc_html_e('Beschreibung', 'pinnwand'); ?> <span class="pinnwand-required">*</span></label>
+                            <textarea id="pinnwand-description" name="description" rows="6" required><?php echo esc_textarea($description); ?></textarea>
+                        </p>
+
+                        <p class="pinnwand-form-field">
+                            <label for="pinnwand-category"><?php esc_html_e('Kategorie', 'pinnwand'); ?> <span class="pinnwand-required">*</span></label>
                             <select id="pinnwand-category" name="category" required>
                                 <option value=""><?php esc_html_e('Bitte waehlen', 'pinnwand'); ?></option>
                                 <?php foreach ($categories as $category) : ?>
@@ -481,27 +489,39 @@ class PW_Public {
                             </select>
                         </p>
 
-                        <p>
-                            <label for="pinnwand-tags"><?php esc_html_e('Keywords (Komma-getrennt)', 'pinnwand'); ?></label><br />
+                        <p class="pinnwand-form-field">
+                            <label for="pinnwand-tags"><?php esc_html_e('Keywords', 'pinnwand'); ?></label>
                             <div class="pinnwand-tag-input-wrap">
                                 <input id="pinnwand-tags" type="text" name="tags" value="<?php echo esc_attr($tag_value); ?>" autocomplete="off" />
                                 <div id="pinnwand-tag-live-suggestions" class="pinnwand-tag-live-suggestions" hidden></div>
                             </div>
                         </p>
 
-                        <p>
-                            <label for="pinnwand-price"><?php esc_html_e('Preis / Gebuehr', 'pinnwand'); ?></label><br />
+                        <p class="pinnwand-form-field">
+                            <label for="pinnwand-price"><?php esc_html_e('Preis / Gebuehr', 'pinnwand'); ?></label>
                             <input id="pinnwand-price" type="number" step="0.01" min="0" name="price" value="<?php echo esc_attr((string) $price); ?>" />
                         </p>
 
-                        <p>
-                            <label for="pinnwand-status"><?php esc_html_e('Status', 'pinnwand'); ?></label><br />
+                        <p id="pinnwand-status-field" class="pinnwand-form-field">
+                            <label for="pinnwand-status"><?php esc_html_e('Verleih', 'pinnwand'); ?></label>
                             <select id="pinnwand-status" name="status">
                                 <option value="available" <?php selected($status, 'available'); ?>><?php esc_html_e('Verfuegbar', 'pinnwand'); ?></option>
                                 <option value="borrowed" <?php selected($status, 'borrowed'); ?>><?php esc_html_e('Ausgeliehen', 'pinnwand'); ?></option>
                                 <option value="unavailable" <?php selected($status, 'unavailable'); ?>><?php esc_html_e('Nicht verfuegbar', 'pinnwand'); ?></option>
                             </select>
                         </p>
+                        <script>
+                        (function() {
+                            var sel = document.getElementById('pinnwand-offer-type');
+                            var field = document.getElementById('pinnwand-status-field');
+                            function toggle() {
+                                var opt = sel.options[sel.selectedIndex];
+                                field.style.display = (opt && opt.dataset.verleih === '1') ? '' : 'none';
+                            }
+                            sel.addEventListener('change', toggle);
+                            toggle();
+                        })();
+                        </script>
 
                     </div>
 
@@ -636,89 +656,134 @@ class PW_Public {
 
         $posts = get_posts(
             array(
-                'post_type' => 'pw_artikel',
-                'author' => get_current_user_id(),
-                'post_status' => 'publish',
-                'orderby' => 'date',
-                'order' => 'DESC',
+                'post_type'      => 'pw_artikel',
+                'author'         => get_current_user_id(),
+                'post_status'    => array('publish', 'draft'),
+                'orderby'        => 'date',
+                'order'          => 'DESC',
                 'posts_per_page' => 50,
             )
         );
 
         ob_start();
+        echo '<div class="pinnwand-wrap">';
         echo $this->render_request_notice();
 
         if (empty($posts)) {
             echo '<p>' . esc_html__('Noch keine Artikel vorhanden.', 'pinnwand') . '</p>';
+            echo '</div>';
             return (string) ob_get_clean();
         }
 
+        $icon_edit   = '<span class="dashicons dashicons-edit" aria-hidden="true"></span>';
+        $icon_delete = '<span class="dashicons dashicons-trash" aria-hidden="true"></span>';
+        $icon_hide   = '<span class="dashicons dashicons-hidden" aria-hidden="true"></span>';
+        $icon_show   = '<span class="dashicons dashicons-visibility" aria-hidden="true"></span>';
+        $icon_borrow = '<span class="dashicons dashicons-lock" aria-hidden="true"></span>';
+        $icon_return = '<span class="dashicons dashicons-unlock" aria-hidden="true"></span>';
+
         echo '<table class="pinnwand-dashboard-table">';
         echo '<thead><tr>';
+        echo '<th>' . esc_html__('Typ', 'pinnwand') . '</th>';
         echo '<th>' . esc_html__('Titel', 'pinnwand') . '</th>';
-        echo '<th>' . esc_html__('Status', 'pinnwand') . '</th>';
+        echo '<th>' . esc_html__('Verleih', 'pinnwand') . '</th>';
+        echo '<th>' . esc_html__('Anzeige', 'pinnwand') . '</th>';
         echo '<th>' . esc_html__('Datum', 'pinnwand') . '</th>';
-        echo '<th>' . esc_html__('Aktionen', 'pinnwand') . '</th>';
+        echo '<th class="pw-col-actions">' . esc_html__('Aktionen', 'pinnwand') . '</th>';
         echo '</tr></thead><tbody>';
 
         foreach ($posts as $post) {
-            $status = (string) get_post_meta($post->ID, 'pw_status', true);
-            if ($status === '') {
-                $status = 'available';
+            $pw_status  = (string) get_post_meta($post->ID, 'pw_status', true);
+            if ($pw_status === '') {
+                $pw_status = 'available';
             }
+            $offer_type       = (string) get_post_meta($post->ID, 'pw_offer_type', true);
+            $is_draft         = $post->post_status === 'draft';
+            $toggle_label     = $is_draft ? __('Aktivieren', 'pinnwand') : __('Deaktivieren', 'pinnwand');
+            $toggle_icon      = $is_draft ? $icon_show : $icon_hide;
+            $visibility_label = $is_draft ? __('Inaktiv', 'pinnwand') : __('Aktiv', 'pinnwand');
 
-            $edit_url = add_query_arg('article_id', (string) $post->ID, get_permalink());
-
+            $edit_url   = add_query_arg('article_id', (string) $post->ID, get_permalink());
             $delete_url = wp_nonce_url(
                 admin_url('admin-post.php?action=pinnwand_delete_article&post_id=' . (int) $post->ID . '&redirect_url=' . rawurlencode(get_permalink())),
                 'pinnwand_delete_article',
                 'pinnwand_delete_nonce'
             );
 
-            echo '<tr>';
+            echo '<tr' . ($is_draft ? ' class="pw-row-inactive"' : '') . '>';
+
+            echo '<td>' . esc_html($this->translate_offer_type($offer_type)) . '</td>';
+
             echo '<td><a href="' . esc_url(get_permalink($post->ID)) . '">' . esc_html($post->post_title) . '</a></td>';
-            echo '<td>' . esc_html($this->translate_status($status)) . '</td>';
-            echo '<td>' . esc_html(mysql2date(get_option('date_format'), $post->post_date)) . '</td>';
-            echo '<td>';
-            echo '<a href="' . esc_url($edit_url) . '">' . esc_html__('Bearbeiten', 'pinnwand') . '</a> | ';
-            echo '<a href="' . esc_url($delete_url) . '" onclick="return confirm(\'' . esc_js(__('Artikel wirklich loeschen?', 'pinnwand')) . '\');">' . esc_html__('Loeschen', 'pinnwand') . '</a>';
-            echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" style="margin-top:6px;">';
-            echo '<input type="hidden" name="action" value="pinnwand_change_status" />';
-            echo '<input type="hidden" name="post_id" value="' . esc_attr((string) $post->ID) . '" />';
-            echo '<input type="hidden" name="redirect_url" value="' . esc_url(get_permalink()) . '" />';
-            wp_nonce_field('pinnwand_change_status', 'pinnwand_status_nonce');
-            echo '<select name="status">';
-            echo '<option value="available"' . selected($status, 'available', false) . '>' . esc_html__('Verfuegbar', 'pinnwand') . '</option>';
-            echo '<option value="borrowed"' . selected($status, 'borrowed', false) . '>' . esc_html__('Ausgeliehen', 'pinnwand') . '</option>';
-            echo '<option value="unavailable"' . selected($status, 'unavailable', false) . '>' . esc_html__('Nicht verfuegbar', 'pinnwand') . '</option>';
-            echo '</select> ';
-            echo '<button type="submit">' . esc_html__('Status speichern', 'pinnwand') . '</button>';
-            echo '</form>';
-            echo '</td>';
+
+            echo '<td><span class="pw-badge pw-badge-' . esc_attr($pw_status) . '">' . esc_html($this->translate_status($pw_status)) . '</span></td>';
+
+            echo '<td>' . esc_html($visibility_label) . '</td>';
+
+            echo '<td>' . esc_html(mysql2date('d.m.y', $post->post_date)) . '</td>';
+
+            $toggle_url = wp_nonce_url(
+                admin_url('admin-post.php?action=pinnwand_toggle_visibility&post_id=' . (int) $post->ID . '&redirect_url=' . rawurlencode(get_permalink())),
+                'pinnwand_toggle_visibility',
+                'pinnwand_toggle_visibility_nonce'
+            );
+
+            echo '<td class="pw-col-actions"><div class="pw-actions">';
+            if (PW_Settings::is_verleih_type($offer_type)) {
+                $is_borrowed       = $pw_status === 'borrowed';
+                $borrow_new_status = $is_borrowed ? 'available' : 'borrowed';
+                $borrow_title      = $is_borrowed ? __('Als verfuegbar markieren', 'pinnwand') : __('Als ausgeliehen markieren', 'pinnwand');
+                $borrow_icon       = $is_borrowed ? $icon_return : $icon_borrow;
+                $borrow_url        = wp_nonce_url(
+                    admin_url('admin-post.php?action=pinnwand_change_status&post_id=' . (int) $post->ID . '&status=' . $borrow_new_status . '&redirect_url=' . rawurlencode(get_permalink())),
+                    'pinnwand_change_status',
+                    'pinnwand_status_nonce'
+                );
+                echo '<a href="' . esc_url($borrow_url) . '" class="pw-icon-btn" title="' . esc_attr($borrow_title) . '">' . $borrow_icon . '</a>';
+            }
+            echo '<a href="' . esc_url($toggle_url) . '" class="pw-icon-btn" title="' . esc_attr($toggle_label) . '">' . $toggle_icon . '</a>';
+            echo '<a href="' . esc_url($edit_url) . '" class="pw-icon-btn" title="' . esc_attr__('Bearbeiten', 'pinnwand') . '">' . $icon_edit . '</a>';
+            echo '<a href="' . esc_url($delete_url) . '" class="pw-icon-btn" title="' . esc_attr__('Loeschen', 'pinnwand') . '" onclick="return confirm(\'' . esc_js(__('Artikel wirklich loeschen?', 'pinnwand')) . '\');">' . $icon_delete . '</a>';
+            echo '</div></td>';
+
             echo '</tr>';
         }
 
         echo '</tbody></table>';
+        echo '</div>';
 
         return (string) ob_get_clean();
     }
 
     public function render_search_form(array $atts = array()): string {
-        $atts = shortcode_atts(array('offer_type' => ''), $atts, 'pw_search_form');
-        $locked_offer_type = in_array($atts['offer_type'], array('verkauf', 'verleih'), true) ? $atts['offer_type'] : '';
+        $atts            = shortcode_atts(array('offer_type' => ''), $atts, 'pw_search_form');
+        $offer_types     = PW_Settings::get_offer_types();
+        $offer_type_keys = array_column($offer_types, 'key');
+        $locked_offer_type = in_array($atts['offer_type'], $offer_type_keys, true) ? $atts['offer_type'] : '';
 
-        $keyword = isset($_GET['pw_keyword']) ? sanitize_text_field(wp_unslash($_GET['pw_keyword'])) : '';
+        $keyword       = isset($_GET['pw_keyword'])  ? sanitize_text_field(wp_unslash($_GET['pw_keyword'])) : '';
+        $category_slug = isset($_GET['pw_category']) ? sanitize_key(wp_unslash($_GET['pw_category']))        : '';
+
+        $all_categories_flat = get_terms(array('taxonomy' => 'pw_kategorie', 'hide_empty' => true, 'orderby' => 'name'));
+        if (is_wp_error($all_categories_flat)) {
+            $all_categories_flat = array();
+        }
+        $all_categories = $this->sort_terms_hierarchically($all_categories_flat);
 
         if ($locked_offer_type !== '') {
             $offer_type = $locked_offer_type;
         } else {
             $offer_type = isset($_GET['pw_offer_type']) ? sanitize_key(wp_unslash($_GET['pw_offer_type'])) : '';
-            if (!in_array($offer_type, array('', 'verkauf', 'verleih'), true)) {
+            if ($offer_type !== '' && !in_array($offer_type, $offer_type_keys, true)) {
                 $offer_type = '';
             }
         }
 
-        $show_borrowed = $locked_offer_type !== 'verkauf'
+        $has_verleih = $locked_offer_type !== ''
+            ? PW_Settings::is_verleih_type($locked_offer_type)
+            : !empty(array_filter($offer_types, static fn($ot) => !empty($ot['verleih_moeglich'])));
+
+        $show_borrowed = $has_verleih
             && isset($_GET['pw_show_borrowed'])
             && $_GET['pw_show_borrowed'] === '1';
 
@@ -726,7 +791,7 @@ class PW_Public {
         $settings = PW_Settings::get();
         $title_max_length = (int) ($settings['card_title_max_length'] ?? 40);
 
-        $query = $this->build_search_query($keyword, 0, $show_borrowed, $offer_type, $paged);
+        $query = $this->build_search_query($keyword, $category_slug, $show_borrowed, $offer_type, $paged);
 
         ob_start();
         ?>
@@ -736,22 +801,35 @@ class PW_Public {
             <?php endif; ?>
 
             <p class="pinnwand-search-item pinnwand-search-item-keyword">
-                <label for="pw-keyword"><?php esc_html_e('Suche', 'pinnwand'); ?></label><br />
+                <label for="pw-keyword"><?php esc_html_e('Suche', 'pinnwand'); ?></label>
                 <input id="pw-keyword" type="text" name="pw_keyword" value="<?php echo esc_attr($keyword); ?>" placeholder="<?php echo esc_attr__('Suche nach Titel, Beschreibung und Keywords', 'pinnwand'); ?>" />
             </p>
 
-            <?php if ($locked_offer_type === '') : ?>
-                <p class="pinnwand-search-item pinnwand-search-item-offer-type">
-                    <label for="pw-offer-type"><?php esc_html_e('Inseratetyp', 'pinnwand'); ?></label><br />
-                    <select id="pw-offer-type" name="pw_offer_type">
-                        <option value="" <?php selected($offer_type, ''); ?>><?php esc_html_e('Alle', 'pinnwand'); ?></option>
-                        <option value="verleih" <?php selected($offer_type, 'verleih'); ?>><?php esc_html_e('Zu verleihen', 'pinnwand'); ?></option>
-                        <option value="verkauf" <?php selected($offer_type, 'verkauf'); ?>><?php esc_html_e('Zu verkaufen', 'pinnwand'); ?></option>
+            <?php if (!empty($all_categories)) : ?>
+                <p class="pinnwand-search-item pinnwand-search-item-category">
+                    <label for="pw-category"><?php esc_html_e('Kategorie', 'pinnwand'); ?></label>
+                    <select id="pw-category" name="pw_category">
+                        <option value=""><?php esc_html_e('Alle', 'pinnwand'); ?></option>
+                        <?php foreach ($all_categories as $cat) : ?>
+                            <option value="<?php echo esc_attr($cat['term']->slug); ?>" <?php selected($category_slug, $cat['term']->slug); ?>><?php echo esc_html(str_repeat('— ', $cat['depth']) . $cat['term']->name); ?></option>
+                        <?php endforeach; ?>
                     </select>
                 </p>
             <?php endif; ?>
 
-            <?php if ($locked_offer_type !== 'verkauf') : ?>
+            <?php if ($locked_offer_type === '') : ?>
+                <p class="pinnwand-search-item pinnwand-search-item-offer-type">
+                    <label for="pw-offer-type"><?php esc_html_e('Inseratetyp', 'pinnwand'); ?></label>
+                    <select id="pw-offer-type" name="pw_offer_type">
+                        <option value="" <?php selected($offer_type, ''); ?>><?php esc_html_e('Alle', 'pinnwand'); ?></option>
+                        <?php foreach ($offer_types as $ot) : ?>
+                            <option value="<?php echo esc_attr($ot['key']); ?>" <?php selected($offer_type, $ot['key']); ?>><?php echo esc_html($ot['label']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </p>
+            <?php endif; ?>
+
+            <?php if ($has_verleih) : ?>
                 <p class="pinnwand-search-item pinnwand-search-item-borrowed">
                     <label>
                         <input type="checkbox" name="pw_show_borrowed" value="1" <?php checked($show_borrowed); ?> />
@@ -781,7 +859,7 @@ class PW_Public {
                         if ($card_offer_type === '') {
                             $card_offer_type = 'verleih';
                         }
-                        $cats = wp_get_post_terms($post_id, 'pw_kategorie', array('fields' => 'names'));
+                        $cats = wp_get_post_terms($post_id, 'pw_kategorie');
                         $tags = wp_get_post_terms($post_id, 'pw_tag', array('fields' => 'names'));
                         $full_title = $this->normalize_title_text(get_the_title($post_id));
                         $display_title = $this->truncate_title($full_title, $title_max_length);
@@ -796,8 +874,19 @@ class PW_Public {
                             </a>
                             <h3 class="pinnwand-card-title"><a href="<?php the_permalink(); ?>" title="<?php echo esc_attr($full_title); ?>"><?php echo esc_html($display_title); ?></a></h3>
                             <p class="pinnwand-card-meta"><strong><?php esc_html_e('Inseratetyp:', 'pinnwand'); ?></strong> <?php echo esc_html($this->translate_offer_type($card_offer_type)); ?></p>
-                            <p class="pinnwand-card-meta"><strong><?php esc_html_e('Status:', 'pinnwand'); ?></strong> <?php echo esc_html($this->translate_status($status)); ?></p>
-                            <p class="pinnwand-card-meta"><strong><?php esc_html_e('Kategorie:', 'pinnwand'); ?></strong> <?php echo esc_html(!empty($cats) ? implode(', ', is_array($cats) ? $cats : array()) : '-'); ?></p>
+                            <?php if (PW_Settings::is_verleih_type($card_offer_type)) : ?>
+                            <p class="pinnwand-card-meta"><strong><?php esc_html_e('Verleih:', 'pinnwand'); ?></strong> <span class="pw-badge pw-badge-<?php echo esc_attr($status ?: 'available'); ?>"><?php echo esc_html($this->translate_status($status)); ?></span></p>
+                            <?php endif; ?>
+                            <p class="pinnwand-card-meta">
+                                <strong><?php esc_html_e('Kategorie:', 'pinnwand'); ?></strong>
+                                <?php if (!empty($cats) && is_array($cats) && !is_wp_error($cats)) : ?>
+                                    <?php foreach ($cats as $cat) : ?>
+                                        <button type="button" class="pinnwand-category-link" data-category="<?php echo esc_attr($cat->slug); ?>"><?php echo esc_html($cat->name); ?></button>
+                                    <?php endforeach; ?>
+                                <?php else : ?>
+                                    -
+                                <?php endif; ?>
+                            </p>
                             <p class="pinnwand-card-meta">
                                 <strong><?php esc_html_e('Keywords:', 'pinnwand'); ?></strong>
                                 <?php if (!empty($tags) && is_array($tags)) : ?>
@@ -939,7 +1028,7 @@ class PW_Public {
         return (string) ob_get_clean();
     }
 
-    private function build_search_query(string $keyword, int $category, bool $show_borrowed, string $offer_type, int $paged): WP_Query {
+    private function build_search_query(string $keyword, string $category_slug, bool $show_borrowed, string $offer_type, int $paged): WP_Query {
         $sort_args = $this->get_listing_sort_args();
         $statuses = array('available');
         if ($show_borrowed) {
@@ -962,7 +1051,7 @@ class PW_Public {
             ),
         );
 
-        if (in_array($offer_type, array('verkauf', 'verleih'), true)) {
+        if ($offer_type !== '' && in_array($offer_type, PW_Settings::get_offer_type_keys(), true)) {
             $meta_query[] = array(
                 'key' => 'pw_offer_type',
                 'value' => $offer_type,
@@ -980,12 +1069,12 @@ class PW_Public {
             'paged' => $paged,
         );
 
-        if ($category > 0) {
+        if ($category_slug !== '') {
             $base_args['tax_query'] = array(
                 array(
                     'taxonomy' => 'pw_kategorie',
-                    'field' => 'term_id',
-                    'terms' => array($category),
+                    'field' => 'slug',
+                    'terms' => array($category_slug),
                 ),
             );
         }
@@ -1024,11 +1113,11 @@ class PW_Public {
                 ),
             );
 
-            if ($category > 0) {
+            if ($category_slug !== '') {
                 $tax_query[] = array(
                     'taxonomy' => 'pw_kategorie',
-                    'field' => 'term_id',
-                    'terms' => array($category),
+                    'field' => 'slug',
+                    'terms' => array($category_slug),
                 );
             }
 
@@ -1058,23 +1147,21 @@ class PW_Public {
     }
 
     private function translate_status(string $status): string {
-        if ($status === 'borrowed') {
-            return __('Ausgeliehen', 'pinnwand');
-        }
-
-        if ($status === 'unavailable') {
-            return __('Nicht verfuegbar', 'pinnwand');
-        }
-
-        return __('Verfuegbar', 'pinnwand');
+        $map = array(
+            'borrowed'    => __('Ausgeliehen', 'pinnwand'),
+            'unavailable' => __('Nicht verfuegbar', 'pinnwand'),
+            'inactive'    => __('Inaktiv', 'pinnwand'),
+        );
+        return $map[$status] ?? __('Verfuegbar', 'pinnwand');
     }
 
     private function translate_offer_type(string $offer_type): string {
-        if ($offer_type === 'verkauf') {
-            return __('Zu verkaufen', 'pinnwand');
+        foreach (PW_Settings::get_offer_types() as $type) {
+            if ($type['key'] === $offer_type) {
+                return $type['label'];
+            }
         }
-
-        return __('Zu verleihen', 'pinnwand');
+        return $offer_type;
     }
 
     private function can_manage_articles(): bool {
@@ -1105,6 +1192,18 @@ class PW_Public {
     private function normalize_title_text(string $title): string {
         $decoded = html_entity_decode($title, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         return trim(wp_strip_all_tags($decoded));
+    }
+
+    private function sort_terms_hierarchically(array $terms, int $parent = 0, int $depth = 0): array {
+        $result = array();
+        foreach ($terms as $term) {
+            if ((int) $term->parent === $parent) {
+                $result[] = array('term' => $term, 'depth' => $depth);
+                $children = $this->sort_terms_hierarchically($terms, $term->term_id, $depth + 1);
+                $result   = array_merge($result, $children);
+            }
+        }
+        return $result;
     }
 
     private function get_listing_sort_args(): array {
@@ -1271,6 +1370,12 @@ class PW_Public {
         }
         if ($action === 'image_uploaded') {
             return '<div class="pinnwand-notice pinnwand-notice-success">' . esc_html__('Bild wurde hochgeladen.', 'pinnwand') . '</div>';
+        }
+        if ($action === 'article_hidden') {
+            return '<div class="pinnwand-notice pinnwand-notice-success">' . esc_html__('Inserat wurde deaktiviert.', 'pinnwand') . '</div>';
+        }
+        if ($action === 'article_published') {
+            return '<div class="pinnwand-notice pinnwand-notice-success">' . esc_html__('Inserat wurde wieder aktiviert.', 'pinnwand') . '</div>';
         }
 
         return '';

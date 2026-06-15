@@ -10,7 +10,7 @@ class PW_Logger {
 
     public function register_admin_menu(): void {
         add_submenu_page(
-            'pinnwand-settings',
+            'pinnwand-all-articles',
             __('Fehlerlog', 'pinnwand'),
             __('Fehlerlog', 'pinnwand'),
             'manage_options',

@@ -38,7 +38,7 @@ class PW_Article_Controller {
             return;
         }
 
-        $valid_offer_types = array('verkauf', 'verleih');
+        $valid_offer_types = PW_Settings::get_offer_type_keys();
         if (!in_array($offer_type, $valid_offer_types, true)) {
             $this->respond_error(__('Ungueltige Angebotsart.', 'pinnwand'), 400, $redirect_url);
             return;
@@ -152,16 +152,16 @@ class PW_Article_Controller {
     }
 
     public function change_article_status(): void {
-        PW_Security::verify_nonce_or_die('pinnwand_status_nonce', 'pinnwand_change_status');
+        PW_Security::verify_nonce_or_die('pinnwand_status_nonce', 'pinnwand_change_status', 'request');
 
         if (!is_user_logged_in()) {
             $this->respond_error(__('Bitte anmelden.', 'pinnwand'), 401);
             return;
         }
 
-        $post_id = isset($_POST['post_id']) ? (int) $_POST['post_id'] : 0;
-        $status = isset($_POST['status']) ? sanitize_text_field(wp_unslash($_POST['status'])) : '';
-        $redirect_url = isset($_POST['redirect_url']) ? esc_url_raw(wp_unslash($_POST['redirect_url'])) : '';
+        $post_id = isset($_REQUEST['post_id']) ? (int) $_REQUEST['post_id'] : 0;
+        $status = isset($_REQUEST['status']) ? sanitize_text_field(wp_unslash($_REQUEST['status'])) : '';
+        $redirect_url = isset($_REQUEST['redirect_url']) ? esc_url_raw(wp_unslash($_REQUEST['redirect_url'])) : '';
 
         if ($post_id <= 0 || $status === '') {
             $this->respond_error(__('Fehlende Pflichtfelder.', 'pinnwand'), 400, $redirect_url);
@@ -173,13 +173,26 @@ class PW_Article_Controller {
             return;
         }
 
-        $valid_statuses = array('available', 'borrowed', 'unavailable');
+        $valid_statuses = array('available', 'borrowed', 'unavailable', 'inactive');
         if (!in_array($status, $valid_statuses, true)) {
             $this->respond_error(__('Ungueltiger Status.', 'pinnwand'), 400, $redirect_url);
             return;
         }
 
-        update_post_meta($post_id, 'pw_status', $status);
+        if ($status === 'inactive') {
+            $result = wp_update_post(array('ID' => $post_id, 'post_status' => 'draft'), true);
+        } else {
+            $result = wp_update_post(array('ID' => $post_id, 'post_status' => 'publish'), true);
+            if (!is_wp_error($result)) {
+                update_post_meta($post_id, 'pw_status', $status);
+            }
+        }
+
+        if (is_wp_error($result)) {
+            PW_Logger::error('article_status_failed', array('post_id' => (string) $post_id, 'code' => $result->get_error_code()));
+            $this->respond_error($result->get_error_message(), 500, $redirect_url);
+            return;
+        }
 
         if (wp_doing_ajax()) {
             wp_send_json_success(array('message' => __('Status aktualisiert.', 'pinnwand')));
@@ -365,6 +378,7 @@ class PW_Article_Controller {
 
         $result = $this->media_manager->upload_single_image($post_id, 'pinnwand_upload_image');
         if (!$result['success']) {
+            PW_Logger::error('image_upload_failed', array('post_id' => (string) $post_id, 'message' => (string) $result['message']));
             $this->respond_error((string) $result['message'], 400, $redirect_url);
             return;
         }
@@ -378,9 +392,54 @@ class PW_Article_Controller {
         PW_Security::safe_redirect($target);
     }
 
-    private function respond_error(string $message, int $status = 400, string $redirect_url = ''): void {
-        PW_Logger::error('request_failed', array('status' => (string) $status, 'message' => $message));
+    public function toggle_article_visibility(): void {
+        PW_Security::verify_nonce_or_die('pinnwand_toggle_visibility_nonce', 'pinnwand_toggle_visibility', 'request');
 
+        if (!is_user_logged_in()) {
+            $this->respond_error(__('Bitte anmelden.', 'pinnwand'), 401);
+            return;
+        }
+
+        $post_id      = isset($_REQUEST['post_id'])      ? (int) $_REQUEST['post_id'] : 0;
+        $redirect_url = isset($_REQUEST['redirect_url']) ? esc_url_raw(wp_unslash($_REQUEST['redirect_url'])) : '';
+
+        if ($post_id <= 0) {
+            $this->respond_error(__('Keine gueltige Artikel-ID.', 'pinnwand'), 400, $redirect_url);
+            return;
+        }
+
+        $post = get_post($post_id);
+        if (!$post || $post->post_type !== 'pw_artikel') {
+            $this->respond_error(__('Artikel nicht gefunden.', 'pinnwand'), 404, $redirect_url);
+            return;
+        }
+
+        if (!current_user_can('manage_options') && !PW_Security::can_edit_article($post_id)) {
+            $this->respond_error(__('Keine Berechtigung.', 'pinnwand'), 403, $redirect_url);
+            return;
+        }
+
+        $new_status = ($post->post_status === 'publish') ? 'draft' : 'publish';
+        $result = wp_update_post(array('ID' => $post_id, 'post_status' => $new_status), true);
+
+        if (is_wp_error($result)) {
+            PW_Logger::error('article_visibility_failed', array('post_id' => (string) $post_id, 'code' => $result->get_error_code()));
+            $this->respond_error($result->get_error_message(), 500, $redirect_url);
+            return;
+        }
+
+        $pw_action = ($new_status === 'draft') ? 'article_hidden' : 'article_published';
+
+        if (wp_doing_ajax()) {
+            wp_send_json_success(array('message' => __('Anzeige geaendert.', 'pinnwand'), 'new_status' => $new_status));
+            return;
+        }
+
+        $target = $redirect_url !== '' ? add_query_arg('pw_action', $pw_action, $redirect_url) : home_url('/');
+        PW_Security::safe_redirect($target);
+    }
+
+    private function respond_error(string $message, int $status = 400, string $redirect_url = ''): void {
         if (wp_doing_ajax()) {
             wp_send_json_error(array('message' => $message), $status);
             return;
@@ -405,6 +464,7 @@ class PW_Article_Controller {
 
         $created = wp_insert_term(__('Allerlei', 'pinnwand'), 'pw_kategorie');
         if (is_wp_error($created)) {
+            PW_Logger::error('category_create_failed', array('code' => $created->get_error_code()));
             return 0;
         }
 

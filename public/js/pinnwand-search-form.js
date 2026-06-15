@@ -20,4 +20,16 @@
             form.submit();
         });
     });
+
+    const categorySelect = document.getElementById('pw-category');
+    const categoryButtons = document.querySelectorAll('.pinnwand-category-link');
+    categoryButtons.forEach(function (button) {
+        button.addEventListener('click', function () {
+            const slug = button.getAttribute('data-category') || '';
+            if (categorySelect) {
+                categorySelect.value = slug;
+            }
+            form.submit();
+        });
+    });
 })();
