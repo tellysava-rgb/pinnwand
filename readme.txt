@@ -3,7 +3,7 @@ Contributors: tellysava-rgb
 Tags: pinnwand, inserate, verleih, verkauf, community
 Requires at least: 6.3
 Tested up to: 7.0
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -87,6 +87,10 @@ Standardmaessig JPG, PNG und WebP. Die erlaubten Formate sowie Groessenlimits ko
 6. Admin-Uebersicht aller Inserate
 
 == Changelog ==
+
+= 1.0.2 =
+* Projektregeln und Git-Workflow in CLAUDE.md dokumentiert
+* Versionierungsschema und Release-Prozess festgelegt
 
 = 1.0.1 =
 * Aktualisierte Plugin-Beschreibung mit vollstaendiger Funktionsuebersicht
