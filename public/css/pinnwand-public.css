@@ -355,6 +355,18 @@ a.pw-icon-btn .dashicons {
   margin-top: 4px;
 }
 
+.pinnwand-profile-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.pinnwand-profile-actions-right {
+  margin-left: auto;
+}
+
 .pinnwand-profile-form input.pinnwand-readonly-input[readonly] {
   background: #f2f4f7;
   color: #475467;
@@ -475,6 +487,11 @@ a.pw-icon-btn .dashicons {
 
 .pinnwand-tag-input-wrap {
   position: relative;
+}
+
+.pinnwand-article-form .pinnwand-form-field .pinnwand-tag-input-wrap {
+  padding: 0;
+  align-self: center;
 }
 
 .pinnwand-tag-live-suggestions {

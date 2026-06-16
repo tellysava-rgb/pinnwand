@@ -375,15 +375,16 @@ class PW_Public {
         }
         $price = $post ? (float) get_post_meta($post->ID, 'pw_price', true) : 0.0;
 
-        $categories = get_terms(
+        $categories_raw = get_terms(
             array(
                 'taxonomy' => 'pw_kategorie',
                 'hide_empty' => false,
             )
         );
-        if (is_wp_error($categories)) {
-            $categories = array();
+        if (is_wp_error($categories_raw)) {
+            $categories_raw = array();
         }
+        $categories_hier = $this->sort_terms_hierarchically($categories_raw);
 
         $tags = $post ? wp_get_post_terms($post->ID, 'pw_tag', array('fields' => 'names')) : array();
         if (!is_array($tags)) {
@@ -481,21 +482,21 @@ class PW_Public {
                             <label for="pinnwand-category"><?php esc_html_e('Kategorie', 'pinnwand'); ?> <span class="pinnwand-required">*</span></label>
                             <select id="pinnwand-category" name="category" required>
                                 <option value=""><?php esc_html_e('Bitte waehlen', 'pinnwand'); ?></option>
-                                <?php foreach ($categories as $category) : ?>
-                                    <option value="<?php echo esc_attr((string) $category->term_id); ?>" <?php selected($selected_category, (int) $category->term_id); ?>>
-                                        <?php echo esc_html($category->name); ?>
+                                <?php foreach ($categories_hier as $cat) : ?>
+                                    <option value="<?php echo esc_attr((string) $cat['term']->term_id); ?>" <?php selected($selected_category, (int) $cat['term']->term_id); ?>>
+                                        <?php echo esc_html(str_repeat('— ', $cat['depth']) . $cat['term']->name); ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
                         </p>
 
-                        <p class="pinnwand-form-field">
+                        <div class="pinnwand-form-field">
                             <label for="pinnwand-tags"><?php esc_html_e('Keywords', 'pinnwand'); ?></label>
                             <div class="pinnwand-tag-input-wrap">
-                                <input id="pinnwand-tags" type="text" name="tags" value="<?php echo esc_attr($tag_value); ?>" autocomplete="off" />
+                                <input id="pinnwand-tags" type="text" name="tags" value="<?php echo esc_attr($tag_value); ?>" autocomplete="off" placeholder="<?php echo esc_attr__('z.B. Keyword1, Keyword2', 'pinnwand'); ?>" />
                                 <div id="pinnwand-tag-live-suggestions" class="pinnwand-tag-live-suggestions" hidden></div>
                             </div>
-                        </p>
+                        </div>
 
                         <p class="pinnwand-form-field">
                             <label for="pinnwand-price"><?php esc_html_e('Preis / Gebuehr', 'pinnwand'); ?></label>
@@ -577,7 +578,7 @@ class PW_Public {
                                                 aria-label="<?php esc_attr_e('Als Hauptbild markieren', 'pinnwand'); ?>"
                                                 onclick="document.getElementById('pinnwand-form-action').value='pinnwand_set_primary_image';document.getElementById('pinnwand-image-action-id').value='<?php echo esc_js((string) $image_id); ?>';"
                                             >
-                                                <span aria-hidden="true">&#9733;</span>
+                                                <span aria-hidden="true"><?php echo (int) $image_id === (int) $primary_image_id ? '&#9733;' : '&#9734;'; ?></span>
                                             </button>
                                             <button
                                                 type="submit"
@@ -716,7 +717,11 @@ class PW_Public {
 
             echo '<td><a href="' . esc_url(get_permalink($post->ID)) . '">' . esc_html($post->post_title) . '</a></td>';
 
-            echo '<td><span class="pw-badge pw-badge-' . esc_attr($pw_status) . '">' . esc_html($this->translate_status($pw_status)) . '</span></td>';
+            if (PW_Settings::is_verleih_type($offer_type)) {
+                echo '<td><span class="pw-badge pw-badge-' . esc_attr($pw_status) . '">' . esc_html($this->translate_status($pw_status)) . '</span></td>';
+            } else {
+                echo '<td>—</td>';
+            }
 
             echo '<td>' . esc_html($visibility_label) . '</td>';
 
@@ -945,10 +950,12 @@ class PW_Public {
         }
 
         $user_id = get_current_user_id();
+        $current_user = wp_get_current_user();
 
+        $username = (string) $current_user->user_login;
         $first_name = (string) get_user_meta($user_id, 'first_name', true);
         $last_name = (string) get_user_meta($user_id, 'last_name', true);
-        $email = (string) wp_get_current_user()->user_email;
+        $email = (string) $current_user->user_email;
         $phone = (string) get_user_meta($user_id, 'pw_phone', true);
         $address = (string) get_user_meta($user_id, 'pw_address', true);
         $zip = (string) get_user_meta($user_id, 'pw_zip', true);
@@ -965,6 +972,13 @@ class PW_Public {
                 <?php wp_nonce_field('pinnwand_save_profile', 'pinnwand_profile_nonce'); ?>
 
                 <div class="pinnwand-profile-grid">
+                    <div class="pinnwand-profile-row">
+                        <div class="pinnwand-profile-field">
+                            <label><?php esc_html_e('Benutzername', 'pinnwand'); ?></label>
+                            <input type="text" class="pinnwand-readonly-input" readonly value="<?php echo esc_attr($username); ?>" />
+                        </div>
+                    </div>
+
                     <div class="pinnwand-profile-row pinnwand-profile-row-two">
                         <div class="pinnwand-profile-field">
                             <label for="pw-first-name"><?php esc_html_e('Vorname', 'pinnwand'); ?> <span class="pinnwand-required">*</span></label>
@@ -1016,11 +1030,13 @@ class PW_Public {
                     <button type="submit"><?php esc_html_e('Meine Daten exportieren', 'pinnwand'); ?></button>
                 </form>
 
-                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" onsubmit="return confirm('<?php echo esc_js(__('Profil inkl. Artikel wirklich loeschen?', 'pinnwand')); ?>');">
-                    <input type="hidden" name="action" value="pinnwand_delete_profile" />
-                    <?php wp_nonce_field('pinnwand_delete_profile', 'pinnwand_delete_profile_nonce'); ?>
-                    <button type="submit" class="button-link-delete"><?php esc_html_e('Profil loeschen', 'pinnwand'); ?></button>
-                </form>
+                <div class="pinnwand-profile-actions-right">
+                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" onsubmit="return confirm('<?php echo esc_js(__('Profil inkl. Artikel wirklich loeschen?', 'pinnwand')); ?>');">
+                        <input type="hidden" name="action" value="pinnwand_delete_profile" />
+                        <?php wp_nonce_field('pinnwand_delete_profile', 'pinnwand_delete_profile_nonce'); ?>
+                        <button type="submit" class="button-link-delete"><?php esc_html_e('Profil loeschen', 'pinnwand'); ?></button>
+                    </form>
+                </div>
             </div>
         </div>
         <?php

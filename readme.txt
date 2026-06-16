@@ -3,7 +3,7 @@ Contributors: tellysava-rgb
 Tags: pinnwand, inserate, verleih, verkauf, community
 Requires at least: 6.3
 Tested up to: 7.0
-Stable tag: 1.0.2
+Stable tag: 1.1.0
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -87,6 +87,14 @@ Standardmaessig JPG, PNG und WebP. Die erlaubten Formate sowie Groessenlimits ko
 6. Admin-Uebersicht aller Inserate
 
 == Changelog ==
+
+= 1.1.0 =
+* Kategorien im Bearbeiten-Formular hierarchisch verschachtelt anzeigen
+* Keywords-Eingabefeld: Label und Input auf gleicher Hoehe, Placeholder mit Beispiel ergaenzt
+* Stern-Icons: gefuellter Stern fuer Favorit-Bild, leerer Stern fuer andere Bilder
+* Meine Inserate: Verleih-Badge nur noch bei Verleih-Inseratetypen sichtbar
+* Profil: Benutzername als Readonly-Feld in erster Zeile hinzugefuegt
+* Profil: Button "Profil loeschen" auf der rechten Seite des Formulars
 
 = 1.0.2 =
 * Projektregeln und Git-Workflow in CLAUDE.md dokumentiert
