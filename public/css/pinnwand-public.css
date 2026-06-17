@@ -174,6 +174,18 @@
   gap: 12px;
 }
 
+.pinnwand-wrap {
+  /*
+   * Bricht via symmetrische negative Margins aus der content-size-Beschränkung
+   * aus. margin-left/right = (content-size − Zielbreite) / 2 → negativ auf
+   * grossen Screens (Breakout), per min() auf 0 gedeckelt auf kleinen Screens.
+   */
+  --pw-target: min(1100px, calc(100vw - 2 * max(var(--wp--style--root--padding-left, 20px), 20px)));
+  width: var(--pw-target);
+  margin-left:  min(0px, calc((var(--wp--style--global--content-size, 650px) - var(--pw-target)) / 2));
+  margin-right: min(0px, calc((var(--wp--style--global--content-size, 650px) - var(--pw-target)) / 2));
+}
+
 .pinnwand-dashboard-table {
   width: 100%;
   border-collapse: collapse;
@@ -246,12 +258,17 @@ a.pw-icon-btn .dashicons {
 .pinnwand-form-wrap input,
 .pinnwand-form-wrap textarea,
 .pinnwand-form-wrap select,
+.pinnwand-form-wrap button,
 .pinnwand-profile-wrap input,
 .pinnwand-profile-wrap textarea,
 .pinnwand-profile-wrap select,
+.pinnwand-profile-wrap button,
 .pinnwand-search-form input,
-.pinnwand-search-form select {
+.pinnwand-search-form select,
+.pinnwand-search-form button,
+.pinnwand-wrap button {
   font-family: inherit;
+  font-size: 1rem;
 }
 
 .pinnwand-article-form input[type="text"],
@@ -294,7 +311,6 @@ a.pw-icon-btn .dashicons {
 .pinnwand-search-form input[type="text"] {
   max-width: none;
   min-height: 44px;
-  font-size: 1rem;
 }
 
 .pinnwand-profile-grid {

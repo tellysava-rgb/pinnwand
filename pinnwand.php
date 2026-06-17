@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Pinnwand
  * Description: Digitale Pinnwand fuer Haeuser und Quartiere — Artikel verleihen oder verkaufen, nur fuer eingeloggte Mitglieder.
- * Version: 1.1.0
+ * Version: 1.1.1
  * Author: Pinnwand Team
  * Text Domain: pinnwand
  * Domain Path: /languages
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('PINNWAND_VERSION', '1.1.0');
+define('PINNWAND_VERSION', '1.1.1');
 define('PINNWAND_PLUGIN_FILE', __FILE__);
 define('PINNWAND_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('PINNWAND_PLUGIN_URL', plugin_dir_url(__FILE__));

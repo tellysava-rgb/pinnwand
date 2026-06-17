@@ -680,8 +680,8 @@ class PW_Public {
         $icon_delete = '<span class="dashicons dashicons-trash" aria-hidden="true"></span>';
         $icon_hide   = '<span class="dashicons dashicons-hidden" aria-hidden="true"></span>';
         $icon_show   = '<span class="dashicons dashicons-visibility" aria-hidden="true"></span>';
-        $icon_borrow = '<span class="dashicons dashicons-lock" aria-hidden="true"></span>';
-        $icon_return = '<span class="dashicons dashicons-unlock" aria-hidden="true"></span>';
+        $icon_borrow = '<span class="dashicons dashicons-remove" aria-hidden="true"></span>';
+        $icon_return = '<span class="dashicons dashicons-insert" aria-hidden="true"></span>';
 
         echo '<table class="pinnwand-dashboard-table">';
         echo '<thead><tr>';

@@ -3,7 +3,7 @@ Contributors: tellysava-rgb
 Tags: pinnwand, inserate, verleih, verkauf, community
 Requires at least: 6.3
 Tested up to: 7.0
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -87,6 +87,12 @@ Standardmaessig JPG, PNG und WebP. Die erlaubten Formate sowie Groessenlimits ko
 6. Admin-Uebersicht aller Inserate
 
 == Changelog ==
+
+= 1.1.1 =
+* Icons "Als ausgeliehen markieren" und "Als verfuegbar markieren" geaendert (remove/insert)
+* Dashboard-Tabelle bricht via negative Margins aus der Theme-Content-Breite aus (responsiv, zentriert)
+* Alle Plugin-Formularelemente einheitlich auf font-size 1rem gesetzt
+* Tote CSS-Klassen entfernt
 
 = 1.1.0 =
 * Kategorien im Bearbeiten-Formular hierarchisch verschachtelt anzeigen
